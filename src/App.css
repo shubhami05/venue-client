@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hide-number-controls::-webkit-outer-spin-button,
+.hide-number-controls::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.fade-in {
+    opacity: 0;
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.range-input {
+    -webkit-appearance: none;
+    /* Remove default styling */
+    appearance: none;
+    /* Remove default styling */
+    background-color: #f9fafb;
+    /* Tailwind gray-50 */
+    height: 2px;
+    /* Height of the track */
+    border-radius: 5px;
+    /* Optional: round the edges of the track */
+}
+
+.range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    /* Remove default styling */
+    appearance: none;
+    /* Remove default styling */
+    width: 15px;
+    /* Width of the thumb */
+    height: 15px;
+    /* Height of the thumb */
+    background-color: #bc5219;
+    /* Custom thumb color */
+    border-radius: 50%;
+    /* Make the thumb circular */
+    cursor: pointer;
+    /* Change cursor on hover */
+}
+
+.range-input::-moz-range-thumb {
+    width: 20px;
+    /* Width of the thumb */
+    height: 20px;
+    /* Height of the thumb */
+    background-color: #bc5219;
+    /* Custom thumb color */
+    border-radius: 50%;
+    /* Make the thumb circular */
+    cursor: pointer;
+    /* Change cursor on hover */
+}
+
+.range-input::-ms-thumb {
+    width: 20px;
+    /* Width of the thumb */
+    height: 20px;
+    /* Height of the thumb */
+    background-color: #bc5219;
+    /* Custom thumb color */
+    border-radius: 50%;
+    /* Make the thumb circular */
+    cursor: pointer;
+    /* Change cursor on hover */
+}
