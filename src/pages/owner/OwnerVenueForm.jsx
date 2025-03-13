@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Button } from 'flowbite-react';
-import { FaArrowCircleLeft } from 'react-icons/fa';
+import { FaArrowCircleLeft, FaPlusCircle } from 'react-icons/fa';
+import axios from 'axios';
+import { useAuth } from '../../hooks/auth';
+import toast from 'react-hot-toast';
+import { MdCloudUpload, MdDelete } from 'react-icons/md';
+import ImageUpload from '../../components/ImageUpload';
 
 const VenueForm = () => {
     const [formData, setFormData] = useState({
         name: '',
-        ownerId: '',
         status: 'pending',
         type: '',
         bookingPay: '',
@@ -43,24 +47,55 @@ const VenueForm = () => {
         parking: {
             available: false,
             capacity: ''
-        }
+        },
+        amenities: [],
+        rules: '',
+        cancellationPolicy: ''
     });
 
     const [venueTypes, setVenueTypes] = useState([]);
     const [venueCities, setVenueCities] = useState([]);
     const [showModal, setShowModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
+    const { userToken } = useAuth();
+    const [isLoading, setIsLoading] = useState(false);
+    const [images, setImages] = useState([]);
+    const [eventList, setEventList] = useState([]);
+    const [customEvent, setCustomEvent] = useState('');
+    const [selectedEvent, setSelectedEvent] = useState('');
+
+    // List of common amenities
+    const amenitiesList = [
+        'Parking',
+        'WiFi',
+        'Air Conditioning',
+        'Sound System',
+        'Catering Service',
+        'Stage',
+        'Security',
+        'Restrooms'
+    ];
 
     useEffect(() => {
         // Fetch venue types from an API in the future
         setVenueTypes(['Banquet Hall', 'Conference Center', 'Outdoor Venue', 'Hotel']);
         setVenueCities(['Surat', 'Ahmedabad', 'Vadodara', 'Rajkot', 'Mumbai']);
+        
+        // Fetch event list - this would be an API call in production
+        // For now, we'll use a dummy list
+        setEventList(['Wedding', 'Birthday Party', 'Corporate Event', 'Conference', 'Seminar', 'Anniversary', 'Baby Shower', 'Engagement']);
     }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
         if (type === 'checkbox') {
-            setFormData({ ...formData, [name]: checked });
+            setFormData({
+                ...formData,
+                amenities: checked
+                    ? [...formData.amenities, value]
+                    : formData.amenities.filter(item => item !== value)
+            });
         } else if (type === 'file') {
             setFormData({ ...formData, [name]: files });
         } else {
@@ -97,6 +132,42 @@ const VenueForm = () => {
         }
     };
 
+    const handleEventSelect = (e) => {
+        const selectedValue = e.target.value;
+        setSelectedEvent(selectedValue);
+        
+        // If "Add Custom" is selected, don't add it to the events array
+        if (selectedValue && selectedValue !== 'custom') {
+            // Check if the event is already in the list
+            if (!formData.events.includes(selectedValue)) {
+                setFormData({
+                    ...formData,
+                    events: [...formData.events, selectedValue]
+                });
+            } else {
+                toast.error('This event is already added');
+            }
+            // Reset the dropdown
+            setSelectedEvent('');
+        }
+    };
+
+    const handleAddCustomEvent = () => {
+        if (customEvent.trim()) {
+            // Check if the custom event is already in the list
+            if (!formData.events.includes(customEvent.trim())) {
+                setFormData({
+                    ...formData,
+                    events: [...formData.events, customEvent.trim()]
+                });
+                // Clear the custom event input
+                setCustomEvent('');
+            } else {
+                toast.error('This event is already added');
+            }
+        }
+    };
+
     const handleTagChange = (e, field) => {
         if (e.key === 'Enter' && e.target.value) {
             e.preventDefault();
@@ -115,16 +186,129 @@ const VenueForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        
+        // Validate file types and sizes
+        const validFiles = files.filter(file => {
+            const isValid = file.type.startsWith('image/');
+            const isWithinSize = file.size <= 5 * 1024 * 1024; // 5MB limit
+            
+            if (!isValid) {
+                toast.error(`${file.name} is not an image file`);
+            }
+            if (!isWithinSize) {
+                toast.error(`${file.name} is too large (max 5MB)`);
+            }
+            
+            return isValid && isWithinSize;
+        });
+
+        // Create preview URLs and add to images array
+        const newImages = validFiles.map(file => ({
+            file,
+            preview: URL.createObjectURL(file)
+        }));
+
+        setImages(prev => [...prev, ...newImages]);
+    };
+
+    const removeImage = (index) => {
+        setImages(prev => {
+            const newImages = [...prev];
+            // Revoke the URL to prevent memory leaks
+            URL.revokeObjectURL(newImages[index].preview);
+            newImages.splice(index, 1);
+            return newImages;
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log(formData);
+        setIsSubmitting(true);
+        
+        // Create a loading toast that will be updated later
+        const loadingToastId = toast.loading('Adding venue...');
+
+        try {
+            // Create a FormData object to handle file uploads
+            const formDataToSend = new FormData();
+            
+            // Add all the text fields
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('type', formData.type);
+            formDataToSend.append('bookingPay', formData.bookingPay);
+            formDataToSend.append('address', formData.address);
+            formDataToSend.append('city', formData.city);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('locationURL', formData.locationURL);
+            formDataToSend.append('rooms', formData.rooms);
+            formDataToSend.append('halls', formData.halls);
+            formDataToSend.append('cancellation', formData.cancellation);
+            
+            // Add arrays as JSON strings
+            formDataToSend.append('otherFacilities', JSON.stringify(formData.otherFacilities));
+            formDataToSend.append('restrictions', JSON.stringify(formData.restrictions));
+            formDataToSend.append('events', JSON.stringify(formData.events));
+            formDataToSend.append('amenities', JSON.stringify(formData.amenities));
+            
+            // Add nested objects as JSON strings
+            formDataToSend.append('withoutFoodRent', JSON.stringify(formData.withoutFoodRent));
+            formDataToSend.append('withFoodRent', JSON.stringify(formData.withFoodRent));
+            formDataToSend.append('food', JSON.stringify(formData.food));
+            formDataToSend.append('decoration', JSON.stringify(formData.decoration));
+            formDataToSend.append('parking', JSON.stringify(formData.parking));
+            
+            // Add rules and policies
+            formDataToSend.append('rules', formData.rules);
+            formDataToSend.append('cancellationPolicy', formData.cancellationPolicy);
+            
+            // Add images from the ImageUpload component
+            images.forEach((image, index) => {
+                formDataToSend.append('images', image.file);
+            });
+            
+            // Make the API call
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/venue/send`,
+                formDataToSend,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+            );
+            
+            // Update the loading toast with success message
+            toast.success('Venue added successfully!', { id: loadingToastId });
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                navigate('/owner/venues');
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error adding venue:', error);
+            
+            // Update the loading toast with error message
+            toast.error(
+                error.response?.data?.message || 'Failed to add venue. Please try again.', 
+                { id: loadingToastId }
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleReset = () => {
+        // Clean up image previews
+        images.forEach(image => {
+            URL.revokeObjectURL(image.preview);
+        });
+        
         setFormData({
             name: '',
-            ownerId: '',
             status: 'pending',
             type: '',
             bookingPay: '',
@@ -161,8 +345,18 @@ const VenueForm = () => {
             parking: {
                 available: false,
                 capacity: ''
-            }
+            },
+            amenities: [],
+            rules: '',
+            cancellationPolicy: ''
         });
+        
+        // Reset images state
+        setImages([]);
+        setSelectedEvent('');
+        setCustomEvent('');
+        
+        toast.success('Form reset successfully');
     };
 
     const handleBackClick = () => {
@@ -289,65 +483,58 @@ const VenueForm = () => {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Other Facilities <span className='text-sm '>(Type and press ENTER)</span></label>
+                        <label className="block text-gray-700 font-semibold">Events</label>
+                        <div className="flex flex-col space-y-2">
+                            {/* Event selection dropdown */}
+                            <div className="flex space-x-2">
+                                <select
+                                    value={selectedEvent}
+                                    onChange={handleEventSelect}
+                                    className="flex-grow shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-10 pl-2"
+                                >
+                                    <option value="">Select an event type</option>
+                                    {eventList.map((event, index) => (
+                                        <option key={index} value={event}>{event}</option>
+                                    ))}
+                                    <option value="custom">+ Add Custom Event</option>
+                                </select>
+                            </div>
 
-                        <div className="flex flex-wrap items-center">
-                            {formData.otherFacilities.map((facility, index) => (
-                                <span key={index} className="bg-blue-200 text-blue-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded">
-                                    {facility}
-                                    <button type="button" onClick={() => removeTag(index, 'otherFacilities')} className="ml-1 text-red-500">x</button>
-                                </span>
-                            ))}
-                            <input
-                                type="text"
-                                onKeyDown={(e) => handleTagChange(e, 'otherFacilities')}
-                                className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
-                            />
-                        </div>
-                    </div>
+                            {/* Custom event input (shown when "Add Custom" is selected) */}
+                            {selectedEvent === 'custom' && (
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="text"
+                                        value={customEvent}
+                                        onChange={(e) => setCustomEvent(e.target.value)}
+                                        placeholder="Enter custom event type"
+                                        className="flex-grow shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-10 pl-2"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAddCustomEvent}
+                                        className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 h-10 flex items-center"
+                                    >
+                                        <FaPlusCircle className="mr-1" /> Add
+                                    </button>
+                                </div>
+                            )}
 
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Restrictions <span className='text-sm '>(Type and press ENTER)</span></label>
-                        <div className="flex flex-wrap items-center">
-                            {formData.restrictions.map((restriction, index) => (
-                                <span key={index} className="bg-blue-200 text-blue-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded">
-                                    {restriction}
-                                    <button type="button" onClick={() => removeTag(index, 'restrictions')} className="ml-1 text-red-500">x</button>
-                                </span>
-                            ))}
-                            <input
-                                type="text"
-                                onKeyDown={(e) => handleTagChange(e, 'restrictions')}
-                                className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Photos</label>
-                        <input
-                            type="file"
-                            name="photos"
-                            onChange={handleChange}
-                            multiple
-                            className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md  focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 font-semibold">Events <span className='text-sm '>(Type and press ENTER)</span></label>
-                        <div className="flex flex-wrap items-center">
-                            {formData.events.map((event, index) => (
-                                <span key={index} className="bg-blue-200 text-blue-800 text-sm font-semibold mr-2 px-2.5 py-0.5 rounded">
-                                    {event}
-                                    <button type="button" onClick={() => removeTag(index, 'events')} className="ml-1 text-red-500">x</button>
-                                </span>
-                            ))}
-                            <input
-                                type="text"
-                                onKeyDown={(e) => handleTagChange(e, 'events')}
-                                className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
-                            />
+                            {/* Display selected events */}
+                            <div className="flex flex-wrap items-center mt-2">
+                                {formData.events.map((event, index) => (
+                                    <span key={index} className="bg-blue-200 text-blue-800 text-sm font-semibold mr-2 mb-2 px-2.5 py-0.5 rounded flex items-center">
+                                        {event}
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeTag(index, 'events')} 
+                                            className="ml-1 text-red-500"
+                                        >
+                                            x
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -371,7 +558,7 @@ const VenueForm = () => {
                             value={formData.description}
                             onChange={handleChange}
                             required
-                            className="mt-1 block w-full border-gray-300 bg-white rounded-md shadow-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-24 pl-2"
+                            className="mt-1 block w-full rounded border-gray-300 bg-white shadow-sm focus:border-orange-500 focus:ring-orange-500 h-24 pl-2"
                         />
                     </div>
                 </div>
@@ -542,18 +729,104 @@ const VenueForm = () => {
                     )}
                 </div>
 
-                <div className="flex justify-between">
-                    <button type="submit" className="w-1/2 font-semibold bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition-all">
-                        Submit
+                {/* Images Section */}
+                <h3 className="text-xl font-semibold mb-2">Venue Images</h3>
+                <div className="mb-6">
+                    <ImageUpload
+                        images={images}
+                        setImages={setImages}
+                        maxImages={8}
+                        maxSizeInMB={5}
+                    />
+                </div>
+
+                {/* Rules and Policies Section */}
+                <h3 className="text-xl font-semibold mb-2">Rules and Policies</h3>
+                <div className="space-y-4 mb-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Venue Rules</label>
+                        <textarea
+                            name="rules"
+                            rows={3}
+                            value={formData.rules}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded border-gray-300 bg-white shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            placeholder="Enter venue rules and guidelines..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Cancellation Policy</label>
+                        <textarea
+                            name="cancellationPolicy"
+                            rows={3}
+                            value={formData.cancellationPolicy}
+                            onChange={handleChange}
+                            className="mt-1 block w-full rounded border-gray-300 bg-white shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                            placeholder="Enter cancellation policy..."
+                        />
+                    </div>
+                </div>
+
+                {/* Amenities Section */}
+                <h3 className="text-xl font-semibold mb-2">Amenities</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {amenitiesList.map((amenity) => (
+                        <label key={amenity} className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                name="amenities"
+                                value={amenity}
+                                checked={formData.amenities.includes(amenity)}
+                                onChange={handleChange}
+                                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm text-gray-700">{amenity}</span>
+                        </label>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                        <label className="block text-gray-700 font-semibold">Other Facilities</label>
+                        <input
+                            type="text"
+                            onKeyDown={(e) => handleTagChange(e, 'otherFacilities')}
+                            className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
+                            placeholder="Add facility and press Enter"
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-gray-700 font-semibold">Restrictions</label>
+                        <input
+                            type="text"
+                            onKeyDown={(e) => handleTagChange(e, 'restrictions')}
+                            className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
+                            placeholder="Add restriction and press Enter"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-between mt-6">
+                    <button 
+                        type="submit" 
+                        className={`w-1/2 font-semibold bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition-all ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Submit'}
                     </button>
-                    <button type="button" onClick={handleReset} className="w-1/2 font-semibold bg-zinc-600 text-white py-2 rounded-md transition-all hover:bg-zinc-700 ml-2">
+                    <button 
+                        type="button" 
+                        onClick={handleReset} 
+                        className="w-1/2 font-semibold bg-zinc-600 text-white py-2 rounded-md transition-all hover:bg-zinc-700 ml-2"
+                        disabled={isSubmitting}
+                    >
                         Reset
                     </button>
                 </div>
             </form>
 
             <div className='flex justify-center items-center w-screen transition-all'>
-
                 <Modal className='w-fit mx-auto bg-transparent ' show={showModal} onClose={() => setShowModal(false)}>
                     <Modal.Header>
                         Confirm Navigation
@@ -571,7 +844,6 @@ const VenueForm = () => {
                     </Modal.Footer>
                 </Modal>
             </div>
-
         </div>
     );
 };

@@ -5,15 +5,15 @@ import { Link } from 'react-router-dom'
 import AOS from 'aos'
 import 'aos/dist/aos.css'
 
-const Footer = () => {
+function UserFooter() {
     useEffect(() => {
         AOS.init({ duration: 1000 });
     }, []);
 
     return (
-        <footer className="w-100 bg-orange-50 py-20" >
-            <div className="mx-auto px-4" data-aos="fade-up"x>
-                <div className="flex container flex-wrap -mx-4">
+        <footer className="w-full bg-orange-50 py-12">
+            <div className="container mx-auto px-4" data-aos="fade-up">
+                <div className="flex flex-wrap -mx-4">
                     <div className="w-full sm:w-1/3 px-4 mb-6">
                         <h5 className="text-xl font-bold text-gray-800 mb-4">VenueServ</h5>
                         <p className="text-gray-700 text-sm">
@@ -34,7 +34,6 @@ const Footer = () => {
                             <a href="#" className="text-gray-700 transition-colors hover:text-orange-500 mr-2">
                                 <FontAwesomeIcon icon={faLinkedin} />
                             </a>
-
                         </div>
                     </div>
                     <div className="w-full sm:w-1/3 px-4 mb-6">
@@ -101,16 +100,15 @@ const Footer = () => {
                             </li>
                         </ul>
                     </div>
-
                 </div>
-                <div className="text-center mt-8">
+                <div className="text-center mt-8 border-t border-gray-200 pt-6">
                     <p className="text-gray-700 text-sm">
                         © Shubham Italiya. All rights reserved.
                     </p>
                 </div>
             </div>
         </footer>
-    )
+    );
 }
 
-export default Footer
+export default UserFooter 

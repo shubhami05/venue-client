@@ -1,12 +1,47 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import Loader from '../components/Loader';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const [email,setEmail] = useState('');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async(e)=>{
+  const handleSubmit = async(e) => {
     e.preventDefault();
+    
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/forgot-password`, { email });
+      
+      if (response.data.success) {
+        toast.success(response.data.message);
+        // Optionally redirect to login after a delay
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        toast.error('Something went wrong. Please try again later.');
+      }
+    } catch (error) {
+      // Only show specific error messages from the server if available
+      // Network errors are handled by axios interceptor
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  if (isLoading) {
+    return <Loader />;
   }
 
   return (
@@ -30,6 +65,7 @@ const ForgotPassword = () => {
             </svg>
             <input
               type="email"
+              required
               placeholder="Email address"
               className="w-full bg-transparent text-slate-800 outline-none"
               value={email}
@@ -39,7 +75,8 @@ const ForgotPassword = () => {
         </div>
         <button
           type="submit"
-          className="w-full font-semibold bg-orange-950 text-white py-2 px-4 rounded-md hover:bg-orange-900 transition duration-300"
+          className={`w-full font-semibold text-white py-2 px-4 rounded-md transition duration-300 ${isLoading ? 'bg-orange-400' : 'bg-orange-950 hover:bg-orange-900'}`}
+          disabled={isLoading}
         >
           Send Reset Link
         </button>

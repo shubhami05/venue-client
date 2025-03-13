@@ -1,9 +1,10 @@
 // UserLayout.js
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ScrollToTop from '../components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
-import Footer from '../components/Footer';
+import UserFooter from '../components/UserFooter';
 import { Route, Routes } from 'react-router-dom';
 import Homepage from '../pages/Home';
 import Explorepage from '../pages/Explore';
@@ -14,12 +15,28 @@ import Bookingspage from '../pages/Bookings';
 import ListYourVenue from '../pages/OwnerRegisterPage';
 import NotFoundPage from '../pages/404';
 import LoginProtectedRoutes from '../middlewares/LoginProtectedRoutes';
+import { useAuth } from '../hooks/auth';
+import toast from 'react-hot-toast';
 
 const UserLayout = () => {
+    const { userRole, userLogined } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Redirect admin and owner users to their respective dashboards
+        if (userLogined) {
+            if (userRole === 'admin') {
+                toast.error('Admin users should use the admin panel');
+                navigate('/admin');
+            } else if (userRole === 'owner') {
+                toast.error('Venue owners should use the owner panel');
+                navigate('/owner');
+            }
+        }
+    }, [userRole, userLogined, navigate]);
 
     return (
         <div className='content-wrapper'>
-
             <Navbar />
             <main>
                 <Routes>
@@ -37,7 +54,7 @@ const UserLayout = () => {
                     <Route path='*' element={<NotFoundPage />} />
                 </Routes>
             </main>
-            <Footer />
+            <UserFooter />
             <ScrollToTop />
         </div>
     );

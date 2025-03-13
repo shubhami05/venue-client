@@ -5,17 +5,27 @@ import axios from 'axios'
 import { useAuth } from '../hooks/auth';
 import toast from 'react-hot-toast';
 import Loader from '../components/Loader';
-
+import { getRedirectPath } from '../utils/roleUtils';
 
 const Loginpage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
-  const { setUserLogined, userRole, setUserRole } = useAuth();
+  const { userLogined, userRole, FetchSession } = useAuth();
   const [isLoading, setIsLoading] = useState(false)
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  // Configure axios to include credentials in all requests
+  axios.defaults.withCredentials = true;
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (userLogined) {
+      const redirectPath = getRedirectPath(userRole);
+      navigate(redirectPath, { replace: true });
+    }
+  }, [userLogined, userRole, navigate]);
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -24,34 +34,43 @@ const Loginpage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/login`, { email, password });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/auth/login`, 
+        { email, password }
+      );
+      
       if (response.data.success) {
-        setUserLogined(true);
-        setUserRole(response.data.role);
         toast.success(response.data.message);
-        if (userRole == "admin") navigate("/admin");
-        else if (userRole == "owner") navigate("/owner");
-        else navigate('/');
-      }
-      else {
-        setUserLogined(false);
+        
+        // Get the role from the response
+        const role = response.data.role;
+        
+        // Manually update auth context through FetchSession
+        await FetchSession();
+        
+        // Navigate based on role from response
+        const redirectPath = getRedirectPath(role);
+        navigate(redirectPath, { replace: true });
+      } else {
         toast.error("Something went wrong, Please try again later!");
       }
-    }
-    catch (error) {
-      console.log("error:", error);
-      setUserLogined(false);
-      toast.error(error.response?.data?.message || error.message);
-    }
-    finally {
-      setIsLoading(false)
+    } catch (error) {
+      // Only show specific error messages from the server if available
+      // Network errors are handled by axios interceptor
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   if (isLoading) {
-    return <Loader />
+    return <Loader />;
   }
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 animate-gradient-x shadow-xl">
       <div className="bg-gray-100 p-8 rounded-lg shadow-md w-96 animate-fade-in">
@@ -94,15 +113,14 @@ const Loginpage = () => {
               />
               <button type="button" className="text-gray-400 pr-1" onClick={togglePasswordVisibility}>
                 {isPasswordVisible ? (
-                  <FaEyeSlash className="text-gray-600 h-5 w-5" /> // Eye with slash icon for hidden password
+                  <FaEyeSlash className="text-gray-600 h-5 w-5" />
                 ) : (
-                  <FaEye className="text-gray-600 h-5 w-5" /> // Regular eye icon for visible password
+                  <FaEye className="text-gray-600 h-5 w-5" />
                 )}
               </button>
             </div>
           </div>
           <div className="flex items-center justify-between mb-6">
-
             <Link to={'/forgot-password'} className="text-sm text-blue-600 transition-all hover:underline">Forgot Password?</Link>
           </div>
           <button

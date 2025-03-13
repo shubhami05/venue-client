@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-
 
 const OwnerVenues = ({ searchTerm }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,9 +10,11 @@ const OwnerVenues = ({ searchTerm }) => {
   const [totalPages, setTotalPages] = useState(0);
   const [currentItems, setCurrentItems] = useState([]);
   const navigate = useNavigate();
+  
+  // Sample data - replace with actual API call
   const productData = [
     {
-
+      id: '1',
       name: 'Apple Watch Series 7',
       category: 'Electronics',
       price: 296,
@@ -21,83 +22,27 @@ const OwnerVenues = ({ searchTerm }) => {
       profit: 45,
     },
     {
-
-      name: 'Macbook Pro M1',
+      id: '1',
+      name: 'Apple Watch Series 7',
       category: 'Electronics',
-      price: 546,
-      sold: 12,
-      profit: 125,
+      price: 296,
+      sold: 22,
+      profit: 45,
     },
     {
-
-      name: 'Dell Inspiron 15',
+      id: '1',
+      name: 'Apple Watch Series 7',
       category: 'Electronics',
-      price: 443,
-      sold: 64,
-      profit: 247,
+      price: 296,
+      sold: 22,
+      profit: 45,
     },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-    {
-
-      name: 'HP Probook 450',
-      category: 'Electronics',
-      price: 499,
-      sold: 72,
-      profit: 103,
-    },
-
+    // ... other items
   ];
 
   useEffect(() => {
     console.log(searchTerm);
   }, [searchTerm]);
-  // useEffect(() => {
-  //   const handler = setTimeout(() => {
-  //     setDebouncedSearchTerm(searchTerm);
-  //   }, 200); // Adjust the delay as needed
-  //   return () => {
-  //     clearTimeout(handler);
-  //   };
-  // }, [searchTerm]);
 
   useEffect(() => {
     const filteredData = productData.filter(item =>
@@ -110,106 +55,160 @@ const OwnerVenues = ({ searchTerm }) => {
 
     // Calculate total pages
     setTotalPages(Math.ceil(productData.length / itemsPerPage));
-  }, [debouncedSearchTerm]);
-
-
-
-  // Calculate the index of the first and last item on the current page
-  // const indexOfLastItem = currentPage * itemsPerPage;
-  // const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
-
-
-  // // Calculate total pages
-  // const totalPages = Math.ceil(productData.length / itemsPerPage);
+  }, [debouncedSearchTerm, currentPage]);
 
   // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
+  // Handle venue actions
+  const handleEdit = (id) => {
+    navigate(`/owner/venues/edit/${id}`);
+  };
+
+  const handleDelete = (id) => {
+    // Implement delete functionality
+    console.log(`Delete venue with id: ${id}`);
+  };
+
+  const handleView = (id) => {
+    navigate(`/owner/venues/view/${id}`);
+  };
 
   if (isLoading) {
-    return <Loader />;
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
   return (
-    <div className="rounded-sm border border-stroke text-orange-900 bg-orange-50 shadow-default dark:border-strokedark dark:bg-boxdark px-5 min-h-screen">
-      <div className="py-6 px-4 md:px-6 xl:px-7 flex justify-between">
-        <h4 className="text-3xl font-bold text-orange-900 dark:text-white">
+    <div className="rounded-sm border border-stroke text-orange-900 bg-orange-50 shadow-default dark:border-strokedark dark:bg-boxdark px-2 sm:px-5 min-h-screen">
+      <div className="py-6 px-2 sm:px-6 xl:px-7 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h4 className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-white">
           All Venues
         </h4>
-        <button className={`bg-orange-600 shadow-lg transition-colors hover:bg-orange-700 text-orange-50 font-bold py-2 px-4 rounded flex items-center gap-2`} onClick={() => navigate('/owner/venues/new')}>
+        <button className="bg-orange-600 shadow-lg transition-colors hover:bg-orange-700 text-orange-50 font-bold py-2 px-4 rounded flex items-center gap-2 w-full sm:w-auto justify-center" onClick={() => navigate('/owner/venues/new')}>
           <FaPlus/>
           Add New Venue
         </button>
       </div>
 
-      <div className="grid grid-cols-6 border border-zinc-500 py-4 px-4 bg-orange-600 text-orange-50 sm:grid-cols-8 md:px-6 2xl:px-7 ">
-        <div className="col-span-1 flex items-center">
-          <p className="font-semibold text-lg">Actions</p>
-        </div>
-        <div className="col-span-2 flex items-center">
-          <p className="font-semibold text-lg">Venue Name</p>
-        </div>
-        <div className="col-span-1 hidden items-center sm:flex">
-          <p className="font-semibold text-lg">Category</p>
-        </div>
-        <div className="col-span-1 flex items-center">
-          <p className="font-semibold text-lg">Price</p>
-        </div>
-        <div className="col-span-1 flex items-center">
-          <p className="font-semibold text-lg">Reviews</p>
-        </div>
-        <div className="col-span-1 flex items-center">
-          <p className="font-semibold text-lg">Inquiries</p>
-        </div>
-        <div className="col-span-1 flex items-center">
-          <p className="font-semibold text-lg">Booking</p>
-        </div>
+      {/* Desktop Table - Hidden on mobile */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full table-auto">
+          <thead>
+            <tr className="bg-orange-600 text-orange-50">
+              <th className="py-4 px-2 text-left">Actions</th>
+              <th className="py-4 px-2 text-left">Venue Name</th>
+              <th className="py-4 px-2 text-left">Category</th>
+              <th className="py-4 px-2 text-left">Price</th>
+              <th className="py-4 px-2 text-left">Reviews</th>
+              <th className="py-4 px-2 text-left">Inquiries</th>
+              <th className="py-4 px-2 text-left">Bookings</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.map((venue, index) => (
+              <tr key={index} className="border-b border-orange-100 bg-zinc-50 hover:bg-orange-100 transition-colors">
+                <td className="py-3 px-2">
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => handleView(venue.id)} 
+                      className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      title="View Details"
+                    >
+                      <FaEye size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleEdit(venue.id)} 
+                      className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
+                      title="Edit Venue"
+                    >
+                      <FaEdit size={16} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(venue.id)} 
+                      className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      title="Delete Venue"
+                    >
+                      <FaTrash size={16} />
+                    </button>
+                  </div>
+                </td>
+                <td className="py-3 px-2 font-medium">{venue.name}</td>
+                <td className="py-3 px-2">{venue.category}</td>
+                <td className="py-3 px-2">${venue.price}</td>
+                <td className="py-3 px-2">{venue.sold}</td>
+                <td className="py-3 px-2">{venue.sold}</td>
+                <td className="py-3 px-2 text-green-600">${venue.profit}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
-        {currentItems.map((product, key) => (
-          <div
-            className="grid grid-cols-6 border border-orange-100 bg-zinc-50 text-zinc-900 py-4 px-4 sm:grid-cols-8 md:px-6 2xl:px-7"
-            key={key}
-          >
-            <div className="col-span-1 flex items-center">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <p className="text-md">.....</p>
+      {/* Mobile Cards - Visible only on mobile */}
+      <div className="md:hidden">
+        {currentItems.map((venue, index) => (
+          <div key={index} className="bg-zinc-50 rounded-lg shadow mb-4 border border-orange-100">
+            <div className="p-4 border-b border-orange-100 flex justify-between items-center">
+              <h3 className="font-bold text-lg">{venue.name}</h3>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => handleView(venue.id)} 
+                  className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  title="View Details"
+                >
+                  <FaEye size={16} />
+                </button>
+                <button 
+                  onClick={() => handleEdit(venue.id)} 
+                  className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
+                  title="Edit Venue"
+                >
+                  <FaEdit size={16} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(venue.id)} 
+                  className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
+                  title="Delete Venue"
+                >
+                  <FaTrash size={16} />
+                </button>
               </div>
             </div>
-            <div className="col-span-2 flex items-center">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <p className="text-md">{product.name}</p>
+            <div className="p-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="font-medium">Category:</span>
+                <span>{venue.category}</span>
               </div>
-            </div>
-            <div className="col-span-1 hidden items-center sm:flex">
-              <p className="text-md">{product.category}</p>
-            </div>
-            <div className="col-span-1 flex items-center">
-              <p className="text-md">${product.price}</p>
-            </div>
-            <div className="col-span-1 flex items-center">
-              <p className="text-md">{product.sold}</p>
-            </div>
-            <div className="col-span-1 flex items-center">
-              <p className="text-md">{product.sold}</p>
-            </div>
-            <div className="col-span-1 flex items-center">
-              <p className="text-md text-meta-3">${product.profit}</p>
+              <div className="flex justify-between">
+                <span className="font-medium">Price:</span>
+                <span>${venue.price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Reviews:</span>
+                <span>{venue.sold}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Inquiries:</span>
+                <span>{venue.sold}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Bookings:</span>
+                <span className="text-green-600">${venue.profit}</span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-center py-4">
+      {/* Pagination - works for both views */}
+      <div className="flex justify-center py-4 flex-wrap">
         {Array.from({ length: totalPages }, (_, index) => (
           <button
             key={index}
             onClick={() => handlePageChange(index + 1)}
-            className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-orange-500 text-white' : 'bg-orange-200 text-orange-900'}`}
+            className={`m-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-orange-500 text-white' : 'bg-orange-200 text-orange-900'}`}
           >
             {index + 1}
           </button>
@@ -219,5 +218,5 @@ const OwnerVenues = ({ searchTerm }) => {
   );
 };
 
-
 export default OwnerVenues;
+

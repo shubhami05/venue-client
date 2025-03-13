@@ -1,14 +1,17 @@
 // OwnerLayout.js
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ScrollToTop from '../components/ScrollToTop';
 import { Route, Routes } from 'react-router-dom';
+import { useAuth } from '../hooks/auth';
+import toast from 'react-hot-toast';
 
 import NotFoundPage from '../pages/404';
 import OwnerDashboard from '../pages/owner/OwnerDashboard';
 import OwnerVenues from '../pages/owner/OwnerVenues';
 import OwnerProfile from '../pages/owner/OwnerProfile';
 import Header from '../components/Header';
-import Sidebar from '../components/OwnerSidebar';
+import Sidebar from '../components/Sidebar';
 import OwnerFooter from '../components/OwnerFooter';
 import OwnerReviews from '../pages/owner/OwnerReviews';
 import OwnerInquiries from '../pages/owner/OwnerInquiries';
@@ -19,13 +22,34 @@ import VenueForm from '../pages/owner/OwnerVenueForm';
 const OwnerLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const { userRole, userLogined } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Only allow owner users to access the owner panel
+        if (!userLogined) {
+            toast.error('Please login to access the owner panel');
+            navigate('/login');
+        } else if (userRole !== 'owner') {
+            toast.error('You do not have permission to access the owner panel');
+            if (userRole === 'admin') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
+        }
+    }, [userRole, userLogined, navigate]);
 
     return (
         <div className="dark:bg-boxdark-2 dark:text-bodydark">
             {/* <!-- ===== Page Wrapper Start ===== --> */}
             <div className="flex overflow-hidden">
                 {/* <!-- ===== Sidebar Start ===== --> */}
-                <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                <Sidebar 
+                    sidebarOpen={sidebarOpen} 
+                    setSidebarOpen={setSidebarOpen} 
+                    role="owner"
+                />
                 {/* <!-- ===== Sidebar End ===== --> */}
 
                 {/* <!-- ===== Content Area Start ===== --> */}

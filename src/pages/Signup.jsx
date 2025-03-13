@@ -25,46 +25,19 @@ const Signuppage = () => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/signup`, { fullname, email, mobile, password });
       if (response.data.success) {
-        toast.success(response.data.message,
-          {
-            duration: 3000,
-            style: {
-              borderRadius: '10px',
-              background: '#9B4619',
-              color: '#fff',
-              fontWeight: "500"
-            },
-          }
-        );
+        toast.success(response.data.message);
         navigate('/login');
       }
       else {
-        toast.error("Something went wrong, Please try again later!",
-          {
-            duration: 3000,
-            style: {
-              borderRadius: '10px',
-              background: '#9B4619',
-              color: '#fff',
-              fontWeight: "500"
-            },
-          }
-        );
+        toast.error("Something went wrong, Please try again later!");
       }
     }
     catch (error) {
-      console.log("error:", error);
-      toast.error(error.response?.data?.message || error.message,
-        {
-          duration: 3000,
-          style: {
-            borderRadius: '10px',
-            background: '#9B4619',
-            color: '#fff',
-            fontWeight: "500"
-          },
-        }
-      );
+      // Only show specific error messages from the server if available
+      // Network errors are handled by axios interceptor
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      }
     }
     finally {
       setIsLoading(false)

@@ -1,53 +1,72 @@
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import './App.css'
 
 import Loginpage from './pages/Login'
 import Signuppage from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
 
-import axios from 'axios'
+// Import our centralized axios configuration
+import './utils/axiosConfig';
+import { testCors } from './utils/testCors';
+
 import UserLayout from './layout/User.layout'
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { Toaster } from 'react-hot-toast'
-import LogoutProtectedRoutes from './middlewares/LogoutProtectedRoutes'
 import AdminLayout from './layout/Admin.layout'
-import AdminProtectedRoutes from './middlewares/AdminProtectedRoutes'
-import UserProtectedRoutes from './middlewares/UserProtectedRoutes'
-import OwnerProtectedRoutes from './middlewares/OwnerProtectedRoutes'
 import OwnerLayout from './layout/Owner.layout'
 import { useAuth } from './hooks/auth'
 
-function AppContent() {
+// Import our role-based route component
+import RoleBasedRoute from './components/RoleBasedRoute'
 
+function AppContent() {
   const pathname = useLocation();
-  const { userRole, FetchSession } = useAuth()
+  const { FetchSession } = useAuth();
+  const sessionFetched = useRef(false);
+  
+  // Test CORS configuration on mount
   useEffect(() => {
-    FetchSession();
-  }, [])
+    // Test CORS configuration
+    testCors()
+      .then(() => console.log('CORS configuration is working'))
+      .catch(error => console.error('CORS configuration test failed:', error));
+  }, []);
+  
+  // Fetch user session only once on mount
+  useEffect(() => {
+    if (!sessionFetched.current) {
+      FetchSession();
+      sessionFetched.current = true;
+    }
+  }, [FetchSession]);
+  
+  // Scroll to top when pathname changes
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  axios.defaults.withCredentials = true;
   return (
     <div>
       <Routes>
-
-        <Route element={<AdminProtectedRoutes />}>
+        {/* Admin Routes - Requires admin role */}
+        <Route element={<RoleBasedRoute requiredRole="admin" deniedMessage="Admin access required" />}>
           <Route path='/admin/*' element={<AdminLayout />} />
         </Route>
-        <Route element={<OwnerProtectedRoutes />}>
+        
+        {/* Owner Routes - Requires owner role */}
+        <Route element={<RoleBasedRoute requiredRole="owner" deniedMessage="Owner access required" />}>
           <Route path="/owner/*" element={<OwnerLayout />} />
         </Route>
-        <Route element={<LogoutProtectedRoutes />}>
+        
+        {/* Authentication Routes - Only accessible when logged out */}
+        <Route element={<RoleBasedRoute requireAuth={false} />}>
           <Route path='/login' element={<Loginpage />} />
           <Route path='/signup' element={<Signuppage />} />
           <Route path='/forgot-password' element={<ForgotPassword />} />
         </Route>
 
-        <Route element={<UserProtectedRoutes />}>
-          <Route path="/*" element={<UserLayout />} />
-        </Route>
+        {/* User Routes - No specific role required */}
+        <Route path="/*" element={<UserLayout />} />
       </Routes>
 
       <Toaster
@@ -64,10 +83,7 @@ function AppContent() {
           },
         }}
       />
-
     </div>
-
-
   );
 }
 
