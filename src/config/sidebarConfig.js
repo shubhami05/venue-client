@@ -64,25 +64,21 @@ export const sidebarConfig = {
         label: 'Dashboard'
       },
       {
-        path: '/admin/users',
-        icon: MdPeople,
-        label: 'Users'
-      },
-      {
         path: '/admin/venues',
         icon: MdHome,
         label: 'Venues'
+      },
+      {
+        path: '/admin/users',
+        icon: MdPeople,
+        label: 'Users'
       },
       {
         path: '/admin/owners',
         icon: MdSupervisorAccount,
         label: 'Owners'
       },
-      {
-        path: '/admin/analytics',
-        icon: MdAnalytics,
-        label: 'Analytics'
-      }
+    
     ],
     otherMenu: [
       {

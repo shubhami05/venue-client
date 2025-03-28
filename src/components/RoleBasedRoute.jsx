@@ -29,7 +29,7 @@ const RoleBasedRoute = ({
   
   // Check if authentication is required
   if (requireAuth && !userLogined) {
-    toast.error("Please login to access this page");
+    // toast.error("Please login to access this page");
     return <Navigate to="/login" replace />;
   }
   

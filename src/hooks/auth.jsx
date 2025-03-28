@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             lastFetchTime.current = now;
             
-            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI || 'http://localhost:8000'}/api/auth/fetch-session`);
+            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/fetch-session`);
             if (response.data.success) {
                 setUserLogined(true);
                 setUser(response.data.userdata);
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
         
         try {
             setLoading(true);
-            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI || 'http://localhost:8000'}/api/auth/logout`);
+            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/logout`);
             if (response.data.success) {
                 setUserLogined(false);
                 setUserRole("");
@@ -92,9 +92,9 @@ export const AuthProvider = ({ children }) => {
     }, []);
     
     // Fetch session on mount
-    useEffect(() => {
-        FetchSession();
-    }, [FetchSession]);
+    // useEffect(() => {
+    //     FetchSession();
+    // }, [FetchSession]);
 
     return (
         <AuthContext.Provider value={{

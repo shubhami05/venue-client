@@ -7,13 +7,13 @@ import { useAuth } from '../hooks/auth';
 import toast from 'react-hot-toast';
 
 import NotFoundPage from '../pages/404';
-import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminUsers from '../pages/admin/AdminUsers';
 import AdminVenues from '../pages/admin/AdminVenues';
 import AdminOwners from '../pages/admin/AdminOwners';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminProfile from '../pages/admin/AdminProfile';
 import AdminSettings from '../pages/admin/AdminSettings';
+import PendingVenues from '../pages/admin/PendingVenues';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import AdminFooter from '../components/AdminFooter';
@@ -44,9 +44,9 @@ const AdminLayout = () => {
             {/* <!-- ===== Page Wrapper Start ===== --> */}
             <div className="flex overflow-hidden">
                 {/* <!-- ===== Sidebar Start ===== --> */}
-                <Sidebar 
-                    sidebarOpen={sidebarOpen} 
-                    setSidebarOpen={setSidebarOpen} 
+                <Sidebar
+                    sidebarOpen={sidebarOpen}
+                    setSidebarOpen={setSidebarOpen}
                     role="admin"
                 />
                 {/* <!-- ===== Sidebar End ===== --> */}
@@ -56,13 +56,18 @@ const AdminLayout = () => {
                     <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setSearchTerm={setSearchTerm} />
                     <main className='bg-orange-100 text-gray-900 min-h-screen'>
                         <Routes>
-                            <Route path='/' element={<AdminDashboard />} />
+                            <Route index element={<AdminAnalytics />} />
+                            <Route path="venues" element={<AdminVenues />} />
+                            <Route path="venues/pending" element={<PendingVenues />} />
+                            {/* <Route path='/' element={<AdminDashboard />} /> */}
                             <Route path='/users' element={<AdminUsers searchTerm={searchTerm} />} />
                             <Route path='/venues' element={<AdminVenues searchTerm={searchTerm} />} />
                             <Route path='/owners' element={<AdminOwners searchTerm={searchTerm} />} />
                             <Route path='/analytics' element={<AdminAnalytics />} />
                             <Route path='/profile' element={<AdminProfile />} />
                             <Route path='/settings' element={<AdminSettings />} />
+                            <Route path='/pending-venues' element={<PendingVenues />} />
+
                             <Route path='/*' element={<NotFoundPage />} />
                         </Routes>
                     </main>

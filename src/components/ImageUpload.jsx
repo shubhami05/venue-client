@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,7 @@ const ImageUpload = ({
   className = ''
 }) => {
   const handleImageChange = (e) => {
+    e.preventDefault();
     const files = Array.from(e.target.files);
     
     // Check if adding new files would exceed the limit
@@ -17,20 +18,23 @@ const ImageUpload = ({
       toast.error(`You can only upload up to ${maxImages} images`);
       return;
     }
-    
-    // Validate file types and sizes
+
+    // Validate files
     const validFiles = files.filter(file => {
-      const isValid = file.type.startsWith('image/');
-      const isWithinSize = file.size <= maxSizeInMB * 1024 * 1024;
-      
-      if (!isValid) {
-        toast.error(`${file.name} is not an image file`);
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+      const isValidType = validTypes.includes(file.type);
+      const isValidSize = file.size <= maxSizeInMB * 1024 * 1024;
+
+      if (!isValidType) {
+        toast.error(`${file.name} is not a valid image type (JPG, PNG, or GIF only)`);
+        return false;
       }
-      if (!isWithinSize) {
-        toast.error(`${file.name} is too large (max ${maxSizeInMB}MB)`);
+      if (!isValidSize) {
+        toast.error(`${file.name} exceeds ${maxSizeInMB}MB size limit`);
+        return false;
       }
-      
-      return isValid && isWithinSize;
+
+      return true;
     });
 
     // Create preview URLs and add to images array
@@ -45,12 +49,22 @@ const ImageUpload = ({
   const removeImage = (index) => {
     setImages(prev => {
       const newImages = [...prev];
-      // Revoke the URL to prevent memory leaks
       URL.revokeObjectURL(newImages[index].preview);
       newImages.splice(index, 1);
       return newImages;
     });
   };
+
+  // Cleanup function for object URLs
+  useEffect(() => {
+    return () => {
+      images.forEach(image => {
+        if (image.preview) {
+          URL.revokeObjectURL(image.preview);
+        }
+      });
+    };
+  }, []);
 
   return (
     <div className={className}>
@@ -61,8 +75,9 @@ const ImageUpload = ({
             <input
               type="file"
               multiple
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/gif"
               onChange={handleImageChange}
+              onClick={(e) => e.target.value = null}
               className="hidden"
             />
             <MdCloudUpload className="h-8 w-8 text-gray-400" />
@@ -91,10 +106,10 @@ const ImageUpload = ({
         ))}
       </div>
       <p className="mt-2 text-sm text-gray-500">
-        Upload up to {maxImages} images (max {maxSizeInMB}MB each)
+        {images.length} of {maxImages} images uploaded
       </p>
     </div>
   );
 };
 
-export default ImageUpload; 
+export default ImageUpload;

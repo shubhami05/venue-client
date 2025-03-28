@@ -9,9 +9,9 @@ import axios from './axiosConfig';
 
 export const testCors = async () => {
   try {
-    console.log('Testing CORS configuration...');
+    // console.log('Testing CORS configuration...');
     const response = await axios.get('/api/test-cors');
-    console.log('CORS test successful:', response.data);
+    // console.log('CORS test successful:', response.data);
     return response.data;
   } catch (error) {
     console.error('CORS test failed:', error);

@@ -1,18 +1,23 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAuth } from '../hooks/auth';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Navbar } from 'flowbite-react';
 import { FaSearch } from 'react-icons/fa';
 
-const Header = ({ sidebarOpen, setSidebarOpen,setSearchTerm  }) => {
+const Header = ({ sidebarOpen, setSidebarOpen, setSearchTerm, searchTerm }) => {
     const { userLogined, LogoutSession, userRole } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Reset search term when route changes
+    useEffect(() => {
+        setSearchTerm('');
+    }, [location.pathname, setSearchTerm]);
 
     return (
         <div className='z-50 '>
             <Navbar className='bg-zinc-800 py-4 content-center border-gray-200' fluid >
-
                 <div className='flex gap-2'>
-
                     <button
                         aria-controls="sidebar"
                         onClick={(e) => {
@@ -33,17 +38,17 @@ const Header = ({ sidebarOpen, setSidebarOpen,setSearchTerm  }) => {
                             <span className='text-orange-500 text-md text-xl content-baseline capitalize font-semibold'>{userRole}</span>
                         </div>
                     </Link>
-
                 </div>
                 <div className="hidden sm:block">
-                    <form >
+                    <form onSubmit={(e) => e.preventDefault()}>
                         <div className="relative">
                             <button className="absolute left-0 top-1/2 -translate-y-1/2">
                                 <FaSearch className='w-6 h-6 text-zinc-300'/>
                             </button>
-
                             <input
+                                key={location.pathname}
                                 type="text"
+                                value={searchTerm}
                                 placeholder="Type to search..."
                                 className="w-full bg-transparent pl-9 pr-4 text-gray-200 focus:outline-none dark:text-white xl:w-125"
                                 onChange={(e) => setSearchTerm(e.target.value)} 
@@ -61,8 +66,6 @@ const Header = ({ sidebarOpen, setSidebarOpen,setSearchTerm  }) => {
                 </div>
             </Navbar>
         </div>
-
-
     )
 }
 

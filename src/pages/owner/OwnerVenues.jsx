@@ -1,83 +1,102 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Loader from '../../components/Loader';
+import { useAuth } from '../../hooks/auth';
+import toast from 'react-hot-toast';
+
 
 const OwnerVenues = ({ searchTerm }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [venues, setVenues] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Number of items to display per page
+  const itemsPerPage = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [currentItems, setCurrentItems] = useState([]);
+  const { userToken } = useAuth();
   const navigate = useNavigate();
-  
-  // Sample data - replace with actual API call
-  const productData = [
-    {
-      id: '1',
-      name: 'Apple Watch Series 7',
-      category: 'Electronics',
-      price: 296,
-      sold: 22,
-      profit: 45,
-    },
-    {
-      id: '1',
-      name: 'Apple Watch Series 7',
-      category: 'Electronics',
-      price: 296,
-      sold: 22,
-      profit: 45,
-    },
-    {
-      id: '1',
-      name: 'Apple Watch Series 7',
-      category: 'Electronics',
-      price: 296,
-      sold: 22,
-      profit: 45,
-    },
-    // ... other items
-  ];
 
+  // Fetch venues
   useEffect(() => {
-    console.log(searchTerm);
-  }, [searchTerm]);
+    const fetchVenues = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('/api/owner/venue/fetch', {
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
 
+        if (response.data.success) {
+          setVenues(response.data.venues);
+          setError(null);
+        } else {
+          setError(response.data.message || 'Failed to fetch venues');
+        }
+      } catch (error) {
+        toast.error(
+          error.response?.data?.message || 'Failed to fetch venue. Please try again.'
+        );
+        setError(error.response?.data?.message || 'Error fetching venues');
+
+        console.error('Fetch venues error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
+
+  // Filter and paginate venues
   useEffect(() => {
-    const filteredData = productData.filter(item =>
-      item.name.toLowerCase().includes((debouncedSearchTerm || "").toLowerCase())
+    const filteredVenues = venues.filter(venue =>
+      venue.name.toLowerCase().includes((debouncedSearchTerm || "").toLowerCase())
     );
-    // Calculate the index of the first and last item on the current page
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    setCurrentItems(filteredData.slice(indexOfFirstItem, indexOfLastItem));
+    setCurrentItems(filteredVenues.slice(indexOfFirstItem, indexOfLastItem));
+    setTotalPages(Math.ceil(filteredVenues.length / itemsPerPage));
+  }, [venues, debouncedSearchTerm, currentPage]);
 
-    // Calculate total pages
-    setTotalPages(Math.ceil(productData.length / itemsPerPage));
-  }, [debouncedSearchTerm, currentPage]);
+  // Handle delete venue
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this venue?')) return;
 
-  // Handle page change
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+    try {
+      setIsLoading(true);
+      const response = await axios.delete(`/api/owner/venue/delete/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-  // Handle venue actions
-  const handleEdit = (id) => {
-    navigate(`/owner/venues/edit/${id}`);
-  };
-
-  const handleDelete = (id) => {
-    // Implement delete functionality
-    console.log(`Delete venue with id: ${id}`);
-  };
-
-  const handleView = (id) => {
-    navigate(`/owner/venues/view/${id}`);
+      if (response.data.success) {
+        setVenues(venues.filter(venue => venue._id !== id));
+        alert('Venue deleted successfully');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Error deleting venue');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <Loader />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500">
+        Error: {error}
+      </div>
+    );
   }
 
   return (
@@ -86,47 +105,49 @@ const OwnerVenues = ({ searchTerm }) => {
         <h4 className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-white">
           All Venues
         </h4>
-        <button className="bg-orange-600 shadow-lg transition-colors hover:bg-orange-700 text-orange-50 font-bold py-2 px-4 rounded flex items-center gap-2 w-full sm:w-auto justify-center" onClick={() => navigate('/owner/venues/new')}>
-          <FaPlus/>
+        <button
+          className="bg-orange-600 shadow-lg transition-colors hover:bg-orange-700 text-orange-50 font-bold py-2 px-4 rounded flex items-center gap-2 w-full sm:w-auto justify-center"
+          onClick={() => navigate('/owner/venues/new')}
+        >
+          <FaPlus />
           Add New Venue
         </button>
       </div>
 
-      {/* Desktop Table - Hidden on mobile */}
+      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-orange-600 text-orange-50">
               <th className="py-4 px-2 text-left">Actions</th>
               <th className="py-4 px-2 text-left">Venue Name</th>
-              <th className="py-4 px-2 text-left">Category</th>
-              <th className="py-4 px-2 text-left">Price</th>
-              <th className="py-4 px-2 text-left">Reviews</th>
-              <th className="py-4 px-2 text-left">Inquiries</th>
-              <th className="py-4 px-2 text-left">Bookings</th>
+              <th className="py-4 px-2 text-left">Type</th>
+              <th className="py-4 px-2 text-left">City</th>
+              <th className="py-4 px-2 text-left">Booking Pay</th>
+              <th className="py-4 px-2 text-left">Status</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((venue, index) => (
-              <tr key={index} className="border-b border-orange-100 bg-zinc-50 hover:bg-orange-100 transition-colors">
+            {currentItems.map((venue) => (
+              <tr key={venue._id} className="border-b border-orange-100 bg-zinc-50 hover:bg-orange-100 transition-colors">
                 <td className="py-3 px-2">
                   <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleView(venue.id)} 
+                    <button
+                      onClick={() => navigate(`/owner/venues/view/${venue._id}`)}
                       className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       title="View Details"
                     >
                       <FaEye size={16} />
                     </button>
-                    <button 
-                      onClick={() => handleEdit(venue.id)} 
+                    <button
+                      onClick={() => navigate(`/owner/venues/edit/${venue._id}`)}
                       className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
                       title="Edit Venue"
                     >
                       <FaEdit size={16} />
                     </button>
-                    <button 
-                      onClick={() => handleDelete(venue.id)} 
+                    <button
+                      onClick={() => handleDelete(venue._id)}
                       className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
                       title="Delete Venue"
                     >
@@ -135,40 +156,46 @@ const OwnerVenues = ({ searchTerm }) => {
                   </div>
                 </td>
                 <td className="py-3 px-2 font-medium">{venue.name}</td>
-                <td className="py-3 px-2">{venue.category}</td>
-                <td className="py-3 px-2">${venue.price}</td>
-                <td className="py-3 px-2">{venue.sold}</td>
-                <td className="py-3 px-2">{venue.sold}</td>
-                <td className="py-3 px-2 text-green-600">${venue.profit}</td>
+                <td className="py-3 px-2">{venue.type}</td>
+                <td className="py-3 px-2">{venue.city}</td>
+                <td className="py-3 px-2">₹{venue.bookingPay}</td>
+                <td className="py-3 px-2">
+                  <span className={`px-2 py-1 rounded ${venue.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    venue.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                    {venue.status}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Mobile Cards - Visible only on mobile */}
+      {/* Mobile Cards */}
       <div className="md:hidden">
-        {currentItems.map((venue, index) => (
-          <div key={index} className="bg-zinc-50 rounded-lg shadow mb-4 border border-orange-100">
+        {currentItems.map((venue) => (
+          <div key={venue._id} className="bg-zinc-50 rounded-lg shadow mb-4 border border-orange-100">
             <div className="p-4 border-b border-orange-100 flex justify-between items-center">
               <h3 className="font-bold text-lg">{venue.name}</h3>
               <div className="flex space-x-2">
-                <button 
-                  onClick={() => handleView(venue.id)} 
+                <button
+                  onClick={() => navigate(`/owner/venues/view/${venue._id}`)}
                   className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                   title="View Details"
                 >
                   <FaEye size={16} />
                 </button>
-                <button 
-                  onClick={() => handleEdit(venue.id)} 
+                <button
+                  onClick={() => navigate(`/owner/venues/edit/${venue._id}`)}
                   className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
                   title="Edit Venue"
                 >
                   <FaEdit size={16} />
                 </button>
-                <button 
-                  onClick={() => handleDelete(venue.id)} 
+                <button
+                  onClick={() => handleDelete(venue._id)}
                   className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
                   title="Delete Venue"
                 >
@@ -178,42 +205,48 @@ const OwnerVenues = ({ searchTerm }) => {
             </div>
             <div className="p-4 space-y-2">
               <div className="flex justify-between">
-                <span className="font-medium">Category:</span>
-                <span>{venue.category}</span>
+                <span className="font-medium">Type:</span>
+                <span>{venue.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Price:</span>
-                <span>${venue.price}</span>
+                <span className="font-medium">City:</span>
+                <span>{venue.city}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Reviews:</span>
-                <span>{venue.sold}</span>
+                <span className="font-medium">Booking Pay:</span>
+                <span>₹{venue.bookingPay}</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-medium">Inquiries:</span>
-                <span>{venue.sold}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Bookings:</span>
-                <span className="text-green-600">${venue.profit}</span>
+                <span className="font-medium">Status:</span>
+                <span className={`px-2 py-1 rounded ${venue.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  venue.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                  {venue.status}
+                </span>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Pagination - works for both views */}
-      <div className="flex justify-center py-4 flex-wrap">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => handlePageChange(index + 1)}
-            className={`m-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-orange-500 text-white' : 'bg-orange-200 text-orange-900'}`}
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center py-4 flex-wrap">
+          {Array.from({ length: totalPages }, (_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentPage(index + 1)}
+              className={`m-1 px-3 py-1 rounded ${currentPage === index + 1
+                ? 'bg-orange-500 text-white'
+                : 'bg-orange-200 text-orange-900'
+                }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

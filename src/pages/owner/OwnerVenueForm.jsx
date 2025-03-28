@@ -37,8 +37,7 @@ const VenueForm = () => {
         },
         food: {
             outsideAllowed: false,
-            providedByVenue: false,
-            foodMenu: ''
+            providedByVenue: false
         },
         decoration: {
             outsideAllowed: false,
@@ -81,7 +80,7 @@ const VenueForm = () => {
         // Fetch venue types from an API in the future
         setVenueTypes(['Banquet Hall', 'Conference Center', 'Outdoor Venue', 'Hotel']);
         setVenueCities(['Surat', 'Ahmedabad', 'Vadodara', 'Rajkot', 'Mumbai']);
-        
+
         // Fetch event list - this would be an API call in production
         // For now, we'll use a dummy list
         setEventList(['Wedding', 'Birthday Party', 'Corporate Event', 'Conference', 'Seminar', 'Anniversary', 'Baby Shower', 'Engagement']);
@@ -90,12 +89,19 @@ const VenueForm = () => {
     const handleChange = (e) => {
         const { name, value, type, checked, files } = e.target;
         if (type === 'checkbox') {
-            setFormData({
-                ...formData,
-                amenities: checked
-                    ? [...formData.amenities, value]
-                    : formData.amenities.filter(item => item !== value)
-            });
+            if (name === 'amenities') {
+                setFormData({
+                    ...formData,
+                    amenities: checked
+                        ? [...formData.amenities, value]
+                        : formData.amenities.filter(item => item !== value)
+                });
+            } else {
+                setFormData({
+                    ...formData,
+                    [name]: checked
+                });
+            }
         } else if (type === 'file') {
             setFormData({ ...formData, [name]: files });
         } else {
@@ -135,7 +141,7 @@ const VenueForm = () => {
     const handleEventSelect = (e) => {
         const selectedValue = e.target.value;
         setSelectedEvent(selectedValue);
-        
+
         // If "Add Custom" is selected, don't add it to the events array
         if (selectedValue && selectedValue !== 'custom') {
             // Check if the event is already in the list
@@ -188,19 +194,20 @@ const VenueForm = () => {
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
-        
+        console.log('Files selected:', files); // Debug log
+
         // Validate file types and sizes
         const validFiles = files.filter(file => {
             const isValid = file.type.startsWith('image/');
             const isWithinSize = file.size <= 5 * 1024 * 1024; // 5MB limit
-            
+
             if (!isValid) {
                 toast.error(`${file.name} is not an image file`);
             }
             if (!isWithinSize) {
                 toast.error(`${file.name} is too large (max 5MB)`);
             }
-            
+
             return isValid && isWithinSize;
         });
 
@@ -211,6 +218,7 @@ const VenueForm = () => {
         }));
 
         setImages(prev => [...prev, ...newImages]);
+        console.log('Updated images state:', newImages); // Debug log
     };
 
     const removeImage = (index) => {
@@ -226,74 +234,66 @@ const VenueForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
-        // Create a loading toast that will be updated later
         const loadingToastId = toast.loading('Adding venue...');
 
         try {
-            // Create a FormData object to handle file uploads
+            console.log('Starting form submission...'); // Debug log
             const formDataToSend = new FormData();
-            
-            // Add all the text fields
-            formDataToSend.append('name', formData.name);
-            formDataToSend.append('type', formData.type);
-            formDataToSend.append('bookingPay', formData.bookingPay);
-            formDataToSend.append('address', formData.address);
-            formDataToSend.append('city', formData.city);
-            formDataToSend.append('description', formData.description);
-            formDataToSend.append('locationURL', formData.locationURL);
-            formDataToSend.append('rooms', formData.rooms);
-            formDataToSend.append('halls', formData.halls);
-            formDataToSend.append('cancellation', formData.cancellation);
-            
-            // Add arrays as JSON strings
-            formDataToSend.append('otherFacilities', JSON.stringify(formData.otherFacilities));
-            formDataToSend.append('restrictions', JSON.stringify(formData.restrictions));
-            formDataToSend.append('events', JSON.stringify(formData.events));
-            formDataToSend.append('amenities', JSON.stringify(formData.amenities));
-            
-            // Add nested objects as JSON strings
-            formDataToSend.append('withoutFoodRent', JSON.stringify(formData.withoutFoodRent));
-            formDataToSend.append('withFoodRent', JSON.stringify(formData.withFoodRent));
-            formDataToSend.append('food', JSON.stringify(formData.food));
-            formDataToSend.append('decoration', JSON.stringify(formData.decoration));
-            formDataToSend.append('parking', JSON.stringify(formData.parking));
-            
-            // Add rules and policies
-            formDataToSend.append('rules', formData.rules);
-            formDataToSend.append('cancellationPolicy', formData.cancellationPolicy);
-            
-            // Add images from the ImageUpload component
+
+            // Add all text fields
+            Object.keys(formData).forEach(key => {
+                if (key !== 'photos' && key !== 'images') {
+                    if (typeof formData[key] === 'object') {
+                        formDataToSend.append(key, JSON.stringify(formData[key]));
+                    } else {
+                        formDataToSend.append(key, formData[key]);
+                    }
+                }
+            });
+
+            // Add images
+            console.log('Number of images to upload:', images.length); // Debug log
             images.forEach((image, index) => {
+                console.log(`Adding image ${index + 1}:`, image.file.name); // Debug log
                 formDataToSend.append('images', image.file);
             });
-            
-            // Make the API call
+
+            // Log FormData contents (for debugging)
+            for (let pair of formDataToSend.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
             const response = await axios.post(
                 `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/venue/send`,
                 formDataToSend,
                 {
                     headers: {
-                        'Authorization': `Bearer ${userToken}`,
+                        
                         'Content-Type': 'multipart/form-data'
+                    },
+                    onUploadProgress: (progressEvent) => {
+                        const percentCompleted = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        console.log('Upload progress:', percentCompleted); // Debug log
                     }
                 }
             );
-            
-            // Update the loading toast with success message
-            toast.success('Venue added successfully!', { id: loadingToastId });
-            
-            // Redirect after a short delay
-            setTimeout(() => {
-                navigate('/owner/venues');
-            }, 2000);
-            
+
+            console.log('Server response:', response.data); // Debug log
+
+            if (response.data.success) {
+                toast.success('Venue added successfully!', { id: loadingToastId });
+                setTimeout(() => {
+                    navigate('/owner/venues');
+                }, 2000);
+            } else {
+                toast.error(response.data.message || 'Failed to add venue', { id: loadingToastId });
+            }
         } catch (error) {
-            console.error('Error adding venue:', error);
-            
-            // Update the loading toast with error message
+            console.error('Error details:', error.response?.data || error.message);
             toast.error(
-                error.response?.data?.message || 'Failed to add venue. Please try again.', 
+                error.response?.data?.message || 'Failed to add venue. Please try again.',
                 { id: loadingToastId }
             );
         } finally {
@@ -306,7 +306,7 @@ const VenueForm = () => {
         images.forEach(image => {
             URL.revokeObjectURL(image.preview);
         });
-        
+
         setFormData({
             name: '',
             status: 'pending',
@@ -335,8 +335,7 @@ const VenueForm = () => {
             },
             food: {
                 outsideAllowed: false,
-                providedByVenue: false,
-                foodMenu: ''
+                providedByVenue: false
             },
             decoration: {
                 outsideAllowed: false,
@@ -350,12 +349,12 @@ const VenueForm = () => {
             rules: '',
             cancellationPolicy: ''
         });
-        
+
         // Reset images state
         setImages([]);
         setSelectedEvent('');
         setCustomEvent('');
-        
+
         toast.success('Form reset successfully');
     };
 
@@ -477,7 +476,7 @@ const VenueForm = () => {
                             name="cancellation"
                             checked={formData.cancellation}
                             onChange={handleChange}
-                            className="mt-1 mr-2 text-white"
+                            className="mt-1 mr-2 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                         />
                         <label className="block text-gray-700 font-semibold">Cancellation Policy</label>
                     </div>
@@ -525,9 +524,9 @@ const VenueForm = () => {
                                 {formData.events.map((event, index) => (
                                     <span key={index} className="bg-blue-200 text-blue-800 text-sm font-semibold mr-2 mb-2 px-2.5 py-0.5 rounded flex items-center">
                                         {event}
-                                        <button 
-                                            type="button" 
-                                            onClick={() => removeTag(index, 'events')} 
+                                        <button
+                                            type="button"
+                                            onClick={() => removeTag(index, 'events')}
                                             className="ml-1 text-red-500"
                                         >
                                             x
@@ -624,18 +623,6 @@ const VenueForm = () => {
                         />
                         <label className="block text-gray-700 font-semibold">Provided by Venue</label>
                     </div>
-
-                    {formData.food.providedByVenue && (
-                        <div className="mb-4">
-                            <label className="block text-gray-700 font-semibold">Food Menu</label>
-                            <input
-                                type="file"
-                                name="foodMenu"
-                                onChange={(e) => handleNestedChange(e, 'food')}
-                                className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
-                            />
-                        </div>
-                    )}
                 </div>
                 {formData.food.providedByVenue && (
                     <>
@@ -808,16 +795,16 @@ const VenueForm = () => {
                 </div>
 
                 <div className="flex justify-between mt-6">
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className={`w-1/2 font-semibold bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition-all ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                         disabled={isSubmitting}
                     >
                         {isSubmitting ? 'Submitting...' : 'Submit'}
                     </button>
-                    <button 
-                        type="button" 
-                        onClick={handleReset} 
+                    <button
+                        type="button"
+                        onClick={handleReset}
                         className="w-1/2 font-semibold bg-zinc-600 text-white py-2 rounded-md transition-all hover:bg-zinc-700 ml-2"
                         disabled={isSubmitting}
                     >
@@ -847,5 +834,6 @@ const VenueForm = () => {
         </div>
     );
 };
+
 
 export default VenueForm;

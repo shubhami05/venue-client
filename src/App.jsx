@@ -4,6 +4,9 @@ import './App.css'
 import Loginpage from './pages/Login'
 import Signuppage from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
+import AdminAnalytics from './pages/admin/AdminAnalytics'
+import AdminVenues from './pages/admin/AdminVenues'
+import PendingVenues from './pages/admin/PendingVenues'
 
 // Import our centralized axios configuration
 import './utils/axiosConfig';
@@ -50,7 +53,7 @@ function AppContent() {
       <Routes>
         {/* Admin Routes - Requires admin role */}
         <Route element={<RoleBasedRoute requiredRole="admin" deniedMessage="Admin access required" />}>
-          <Route path='/admin/*' element={<AdminLayout />} />
+          <Route path='/admin/*' element={<AdminLayout />}/>
         </Route>
         
         {/* Owner Routes - Requires owner role */}
