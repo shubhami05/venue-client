@@ -57,8 +57,8 @@ const AdminLayout = () => {
                     <main className='bg-orange-100 text-gray-900 min-h-screen'>
                         <Routes>
                             <Route index element={<AdminAnalytics />} />
-                            <Route path="venues" element={<AdminVenues />} />
-                            <Route path="venues/pending" element={<PendingVenues />} />
+                            {/* <Route path="/venues" element={<AdminVenues />} /> */}
+                            <Route path="/venues/pending" element={<PendingVenues searchTerm={searchTerm}/>} />
                             {/* <Route path='/' element={<AdminDashboard />} /> */}
                             <Route path='/users' element={<AdminUsers searchTerm={searchTerm} />} />
                             <Route path='/venues' element={<AdminVenues searchTerm={searchTerm} />} />
