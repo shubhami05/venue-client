@@ -35,12 +35,12 @@ const AdminAnalytics = () => {
         setStats(response.data);
       } else {
         setError(response.data.message);
-        toast.error(response.data.message);
+        // toast.error(response.data.message);
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
       setError(error.response?.data?.message || 'Failed to fetch analytics');
-      toast.error(error.response?.data?.message || 'Failed to fetch analytics');
+      // toast.error(error.response?.data?.message || 'Failed to fetch analytics');
     } finally {
       setLoading(false);
     }

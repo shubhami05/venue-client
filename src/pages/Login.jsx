@@ -5,7 +5,7 @@ import axios from 'axios'
 import { useAuth } from '../hooks/auth';
 import toast from 'react-hot-toast';
 import Loader from '../components/Loader';
-import { getRedirectPath } from '../utils/roleUtils';
+import { getRedirectPath } from '../utils/roleUtils.jsx';
 
 const Loginpage = () => {
   const [email, setEmail] = useState('');
@@ -34,22 +34,22 @@ const Loginpage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/auth/login`, 
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/auth/login`,
         { email, password }
       );
-      
+
       if (response.data.success) {
         toast.success(response.data.message);
-        
+
         // Get the role from the response
         const role = response.data.role;
-        
+
         // Manually update auth context through FetchSession
         await FetchSession();
-        
+
         // Navigate based on role from response
         const redirectPath = getRedirectPath(role);
         navigate(redirectPath, { replace: true });
@@ -58,10 +58,8 @@ const Loginpage = () => {
       }
     } catch (error) {
       // Only show specific error messages from the server if available
-      // Network errors are handled by axios interceptor
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
-      }
+      toast.error(error.response.data.message);
+
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +68,7 @@ const Loginpage = () => {
   if (isLoading) {
     return <Loader />;
   }
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 animate-gradient-x shadow-xl">
       <div className="bg-gray-100 p-8 rounded-lg shadow-md w-96 animate-fade-in">

@@ -28,8 +28,8 @@ const Navbar = () => {
     }, []);
 
     return (
-        <section className='w-100 bg-orange-50 flex justify-center'>
-            <div className="flex justify-between items-center container py-3" data-aos="fade-down">
+        <section className='flex justify-center bg-orange-100 '>
+            <div className="flex justify-between px-2 items-center w-full container py-3" data-aos="fade-down">
                 <div className="flex items-center">
                     <h1 className="text-2xl font-bold transition-colors text-orange-600 hover:text-orange-700">
                         <Link to="/" onClick={closeMenu}>

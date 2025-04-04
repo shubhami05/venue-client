@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 const ImageUpload = ({
   images,
+  prevImages,
   setImages,
   maxImages = 8,
   maxSizeInMB = 5,
@@ -57,6 +58,13 @@ const ImageUpload = ({
 
   // Cleanup function for object URLs
   useEffect(() => {
+
+    if (prevImages) {
+      setImages(prevImages.map(image => ({
+        file: null,
+        preview: image
+      })));
+    }
     return () => {
       images.forEach(image => {
         if (image.preview) {

@@ -5,7 +5,8 @@ import axios from 'axios';
 import Loader from '../../components/Loader';
 import { useAuth } from '../../hooks/auth';
 import toast from 'react-hot-toast';
-
+import VenueDetailsModal from '../../components/VenueDetailsModal';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const OwnerVenues = ({ searchTerm }) => {
   const [venues, setVenues] = useState([]);
@@ -13,23 +14,22 @@ const OwnerVenues = ({ searchTerm }) => {
   const [error, setError] = useState(null);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
   const itemsPerPage = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [currentItems, setCurrentItems] = useState([]);
   const { userToken } = useAuth();
   const navigate = useNavigate();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [venueToDelete, setVenueToDelete] = useState(null);
 
   // Fetch venues
   useEffect(() => {
     const fetchVenues = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get('/api/owner/venue/fetch', {
-          headers: {
-            'Authorization': `Bearer ${userToken}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
+        const response = await axios.get('/api/owner/venue/fetch');
 
         if (response.data.success) {
           setVenues(response.data.venues);
@@ -52,6 +52,41 @@ const OwnerVenues = ({ searchTerm }) => {
     fetchVenues();
   }, []);
 
+  // Fetch venue details
+  const fetchVenueDetails = async (venueId) => {
+    try {
+      setModalLoading(true);
+      const response = await axios.get(`/api/owner/venue/fetch/${venueId}`);
+
+      if (response.data.success) {
+        setSelectedVenue(response.data.venue);
+      } else {
+        toast.error(response.data.message || 'Failed to fetch venue details');
+        setSelectedVenue(null);
+      }
+    } catch (error) {
+      console.error('Error fetching venue details:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch venue details');
+      setSelectedVenue(null);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  // Handle view button click
+  const handleViewClick = (e, venueId) => {
+    e.stopPropagation(); // Prevent row click event
+    fetchVenueDetails(venueId);
+  };
+
+  // Handle edit venue
+  const handleEdit = (e, venueId) => {
+    e.stopPropagation(); // Prevent row click event
+    navigate(`/owner/venues/edit/${venueId}`, {
+      state: { venueId }
+    });
+  };
+
   // Filter and paginate venues
   useEffect(() => {
     const filteredVenues = venues.filter(venue =>
@@ -65,25 +100,34 @@ const OwnerVenues = ({ searchTerm }) => {
   }, [venues, debouncedSearchTerm, currentPage]);
 
   // Handle delete venue
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this venue?')) return;
+  const handleDelete = (e, venue) => {
+    e.stopPropagation(); // Prevent row click event
+    setVenueToDelete(venue);
+    setShowDeleteModal(true);
+  };
+
+  // Add new function to handle the actual deletion
+  const confirmDelete = async () => {
+    if (!venueToDelete) return;
 
     try {
       setIsLoading(true);
-      const response = await axios.delete(`/api/owner/venue/delete/${id}`, {
+      const response = await axios.delete(`/api/owner/venue/delete/${venueToDelete._id}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${userToken}`
         }
       });
 
       if (response.data.success) {
-        setVenues(venues.filter(venue => venue._id !== id));
-        alert('Venue deleted successfully');
+        setVenues(venues.filter(venue => venue._id !== venueToDelete._id));
+        toast.success('Venue deleted successfully');
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Error deleting venue');
+      toast.error(error.response?.data?.message || 'Error deleting venue');
     } finally {
       setIsLoading(false);
+      setShowDeleteModal(false);
+      setVenueToDelete(null);
     }
   };
 
@@ -133,26 +177,26 @@ const OwnerVenues = ({ searchTerm }) => {
                 <td className="py-3 px-2">
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => navigate(`/owner/venues/view/${venue._id}`)}
+                      onClick={(e) => handleViewClick(e, venue._id)}
                       className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                       title="View Details"
                     >
                       <FaEye size={16} />
                     </button>
                     <button
-                      onClick={() => navigate(`/owner/venues/edit/${venue._id}`)}
+                      onClick={(e) => handleEdit(e, venue._id)}
                       className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
                       title="Edit Venue"
                     >
                       <FaEdit size={16} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(venue._id)}
+                    {/* <button
+                      onClick={(e) => handleDelete(e, venue)}
                       className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
                       title="Delete Venue"
                     >
                       <FaTrash size={16} />
-                    </button>
+                    </button> */}
                   </div>
                 </td>
                 <td className="py-3 px-2 font-medium">{venue.name}</td>
@@ -160,7 +204,7 @@ const OwnerVenues = ({ searchTerm }) => {
                 <td className="py-3 px-2">{venue.city}</td>
                 <td className="py-3 px-2">₹{venue.bookingPay}</td>
                 <td className="py-3 px-2">
-                  <span className={`px-2 py-1 rounded ${venue.status === 'approved' ? 'bg-green-100 text-green-800' :
+                  <span className={`px-2 py-1 rounded ${venue.status === 'accepted' ? 'bg-green-100 text-green-800' :
                     venue.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
@@ -181,26 +225,26 @@ const OwnerVenues = ({ searchTerm }) => {
               <h3 className="font-bold text-lg">{venue.name}</h3>
               <div className="flex space-x-2">
                 <button
-                  onClick={() => navigate(`/owner/venues/view/${venue._id}`)}
+                  onClick={(e) => handleViewClick(e, venue._id)}
                   className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
                   title="View Details"
                 >
                   <FaEye size={16} />
                 </button>
                 <button
-                  onClick={() => navigate(`/owner/venues/edit/${venue._id}`)}
+                  onClick={(e) => handleEdit(e, venue._id)}
                   className="p-1 bg-green-500 text-white rounded hover:bg-green-600"
                   title="Edit Venue"
                 >
                   <FaEdit size={16} />
                 </button>
-                <button
-                  onClick={() => handleDelete(venue._id)}
+                {/* <button
+                  onClick={(e) => handleDelete(e, venue)}
                   className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
                   title="Delete Venue"
                 >
                   <FaTrash size={16} />
-                </button>
+                </button> */}
               </div>
             </div>
             <div className="p-4 space-y-2">
@@ -218,7 +262,7 @@ const OwnerVenues = ({ searchTerm }) => {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Status:</span>
-                <span className={`px-2 py-1 rounded ${venue.status === 'approved' ? 'bg-green-100 text-green-800' :
+                <span className={`px-2 py-1 rounded ${venue.status === 'accepted' ? 'bg-green-100 text-green-800' :
                   venue.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-red-100 text-red-800'
                   }`}>
@@ -247,6 +291,28 @@ const OwnerVenues = ({ searchTerm }) => {
           ))}
         </div>
       )}
+
+      {/* Venue Details Modal */}
+      {(selectedVenue || modalLoading) && (
+        <VenueDetailsModal
+          venue={selectedVenue}
+          onClose={() => setSelectedVenue(null)}
+          loading={modalLoading}
+        />
+      )}
+
+      {/* Add the ConfirmationModal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setVenueToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title="Delete Venue"
+        message={`Are you sure you want to delete "${venueToDelete?.name}"? This action cannot be undone.`}
+        type="danger"
+      />
     </div>
   );
 };

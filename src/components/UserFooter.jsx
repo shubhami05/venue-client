@@ -6,13 +6,11 @@ import AOS from 'aos'
 import 'aos/dist/aos.css'
 
 function UserFooter() {
-    useEffect(() => {
-        AOS.init({ duration: 1000 });
-    }, []);
+    
 
     return (
         <footer className="w-full bg-orange-50 py-12">
-            <div className="container mx-auto px-4" data-aos="fade-up">
+            <div className="container mx-auto px-4" >
                 <div className="flex flex-wrap -mx-4">
                     <div className="w-full sm:w-1/3 px-4 mb-6">
                         <h5 className="text-xl font-bold text-gray-800 mb-4">VenueServ</h5>

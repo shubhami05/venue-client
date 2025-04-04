@@ -4,13 +4,11 @@ import './App.css'
 import Loginpage from './pages/Login'
 import Signuppage from './pages/Signup'
 import ForgotPassword from './pages/ForgotPassword'
-import AdminAnalytics from './pages/admin/AdminAnalytics'
-import AdminVenues from './pages/admin/AdminVenues'
-import PendingVenues from './pages/admin/PendingVenues'
+import EditVenue from './pages/owner/EditVenue'
 
 // Import our centralized axios configuration
-import './utils/axiosConfig';
-import { testCors } from './utils/testCors';
+import './utils/axiosConfig.jsx';
+import { testCors } from './utils/testCors.jsx';
 
 import UserLayout from './layout/User.layout'
 import { useEffect, useLayoutEffect, useRef } from 'react'

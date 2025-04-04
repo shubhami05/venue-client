@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/auth';
-import { getRedirectPath } from '../utils/roleUtils';
+import { getRedirectPath } from '../utils/roleUtils.jsx';
 
 /**
  * A component to display when access is denied

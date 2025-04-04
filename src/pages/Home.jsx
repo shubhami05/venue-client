@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FaBookmark, FaBusinessTime, FaCheckCircle, FaExternalLinkAlt, FaHandHoldingUsd, FaHandshake, FaMapMarkerAlt, FaPlaceOfWorship, FaStar, FaStarHalfAlt, FaUserCircle } from 'react-icons/fa'
 import about_img from '../assets/about_img.jpg'
 import hero_img from '../assets/hero_img.png'
-import { initAOS } from '../utils/initAOS';
+import { initAOS } from '../utils/initAOS.jsx';
 
 const aboutUsData = [
   {
@@ -58,7 +58,7 @@ const Homepage = () => {
   return (
     <div className='bg-gray-900'>
       {/* Hero section */}
-      <section className="bg-orange-50 w-full">
+      <section className="bg-gradient-to-b from-orange-100 to-orange-50 w-full">
         <div className='flex flex-col container min-h-screen items-center justify-center lg:gap-0 gap-10 lg:flex-row lg:justify-between mx-auto py-12' data-aos="fade-up">
           <div className="text-left animate-fade-in md:ms-4">
             <h2 className="text-4xl font-bold mb-4 text-gray-900 drop-shadow-lg overflow-hidden">Discover Your Ideal Venue</h2>

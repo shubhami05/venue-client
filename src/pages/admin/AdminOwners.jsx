@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { MdEdit, MdDelete, MdBlock, MdLocationOn, MdPhone } from 'react-icons/md';
+import { MdEdit, MdDelete, MdBlock, MdLocationOn, MdPhone, MdPending } from 'react-icons/md';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
+import { useNavigate } from 'react-router-dom';
 
 const AdminOwners = ({ searchTerm }) => {
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchOwners();
@@ -43,33 +45,9 @@ const AdminOwners = ({ searchTerm }) => {
     );
   });
 
-  const handleEdit = (ownerId) => {
-    // Implement edit functionality
-    console.log('Edit owner:', ownerId);
-  };
 
-  const handleDelete = (ownerId) => {
-    // Implement delete functionality
-    console.log('Delete owner:', ownerId);
-  };
 
-  const handleToggleStatus = async (ownerId) => {
-    try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/admin/owner/toggle-status/${ownerId}`
-      );
-
-      if (response.data.success) {
-        toast.success(response.data.message);
-        fetchOwners(); // Refresh the owners list
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to toggle owner status');
-    }
-  };
-
+  
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
@@ -88,8 +66,15 @@ const AdminOwners = ({ searchTerm }) => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
+     <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Owner Management</h1>
+        <button
+          onClick={() => navigate('/admin/owners/pending')}
+          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+        >
+          <MdPending className="mr-2" />
+          Pending Applications
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

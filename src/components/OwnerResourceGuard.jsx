@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/auth';
-import { canAccessVenue, canAccessBooking, canAccessReview } from '../utils/roleUtils';
+import { canAccessVenue, canAccessBooking, canAccessReview } from '../utils/roleUtils.jsx';
 import AccessDenied from './AccessDenied';
 
 /**

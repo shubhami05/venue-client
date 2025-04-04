@@ -18,6 +18,7 @@ import OwnerInquiries from '../pages/owner/OwnerInquiries';
 import OwnerBookings from '../pages/owner/OwnerBookings';
 import OwnerGethelp from '../pages/owner/OwnerGethelp';
 import VenueForm from '../pages/owner/OwnerVenueForm';
+import EditVenue from '../pages/owner/EditVenue';
 
 const OwnerLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,6 +61,7 @@ const OwnerLayout = () => {
                             <Route path='/' element={<OwnerDashboard />} />
                             <Route path='/venues' element={<OwnerVenues searchTerm={searchTerm} />} />
                             <Route path='/venues/new' element={<VenueForm />} />
+                            <Route path='/venues/edit/:venueId' element={<EditVenue/>} />
                             <Route path='/reviews' element={<OwnerReviews />} />
                             <Route path='/inquiries' element={<OwnerInquiries />} />
                             <Route path='/bookings' element={<OwnerBookings />} />

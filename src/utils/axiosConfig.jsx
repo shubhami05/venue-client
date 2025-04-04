@@ -29,34 +29,40 @@ axios.interceptors.response.use(
   (error) => {
     // Create a unique error key based on status and URL
     const errorKey = `${error.response?.status || 'network'}-${error.config?.url || 'unknown'}`;
-    
+
     // Handle session expiration
     if (error.response && error.response.status === 401) {
+      // Get current path from window.location
+      const currentPath = window.location.pathname;
+
       // Only show the unauthorized message once per endpoint
       if (!shownErrors.has(errorKey)) {
-        toast.error('Session expired. Please log in again.');
+        // Don't show session expired message on login/register pages
+
+        // toast.error('Session expired. Please log in again.');
         shownErrors.add(errorKey);
-        
+
         // Clear the error after 5 seconds to allow it to be shown again if it persists
         setTimeout(() => {
           shownErrors.delete(errorKey);
         }, 5000);
+
       }
     }
-    
+
     // Handle network errors (like CORS or server down)
     else if (error.message && error.message.includes('Network Error')) {
       if (!shownErrors.has('network-error')) {
         toast.error('Network error - Please check server connection');
         shownErrors.add('network-error');
-        
+
         // Clear the network error after 10 seconds
         setTimeout(() => {
           shownErrors.delete('network-error');
         }, 10000);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

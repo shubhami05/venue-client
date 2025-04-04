@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/auth';
-import { hasRole } from '../utils/roleUtils';
+import { hasRole } from '../utils/roleUtils.jsx';
 
 /**
  * A component that conditionally renders content based on user role

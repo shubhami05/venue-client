@@ -26,23 +26,23 @@ const UserLayout = () => {
         // Redirect admin and owner users to their respective dashboards
         if (userLogined) {
             if (userRole === 'admin') {
-                toast.error('Admin users should use the admin panel');
+                // toast.error('Admin users should use the admin panel');
                 navigate('/admin');
             } else if (userRole === 'owner') {
-                toast.error('Venue owners should use the owner panel');
+                // toast.error('Venue owners should use the owner panel');
                 navigate('/owner');
             }
         }
     }, [userRole, userLogined, navigate]);
 
     return (
-        <div className='content-wrapper'>
+        <div className='content-wrapper bg-gray-900'>
             <Navbar />
             <main>
                 <Routes>
                     <Route path='/' element={<Homepage />} />
                     <Route path='/explore' element={<Explorepage />} />
-                    <Route path='/explore/venue/:id' element={<VenueDetails />} />
+                    <Route path='/explore/venue/:venueId' element={<VenueDetails />} />
                     <Route path='/contact' element={<Contactpage />} />
                     <Route path='/about' element={<Aboutpage />} />
 

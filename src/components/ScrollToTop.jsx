@@ -2,15 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { FaArrowAltCircleUp, FaLongArrowAltUp } from 'react-icons/fa';
 
-const ScrollToTop = () => {
+const ScrollToTop = ({ onVisibilityChange }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   const toggleVisibility = () => {
-    if (window.scrollY > 300) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
+    const newVisibility = window.scrollY > 300;
+    setIsVisible(newVisibility);
+    onVisibilityChange?.(newVisibility); // Notify parent component
   };
 
   const scrollToTop = () => {

@@ -1,84 +1,181 @@
 import React, { useState } from 'react'
 import img1 from '../assets/Contact_img.png'
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import { useAuth } from '../hooks/auth';
+import { MdPhone } from 'react-icons/md';
 
 const OwnerRegisterPage = () => {
-
-  const [email, setEmail] = useState();
-  const [name, setName] = useState();
-  const [mobile, setMobile] = useState();
-  const [message, setMessage] = useState();
+  const { user, userLogined } = useAuth();
+  const [aadharCard, setAadharCard] = useState(null);
   const [isLoading, setLoading] = useState(false);
+  const [agreementChecked, setAgreementChecked] = useState(false);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file type
+      if (file.type !== 'application/pdf') {
+        toast.error('Please upload a PDF file');
+        return;
+      }
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should be less than 5MB');
+        return;
+      }
+      setAadharCard(file);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!userLogined) {
+      toast.error('Please login to register as a venue owner');
+      return;
+    }
+    if (!aadharCard) {
+      toast.error('Please upload your Aadhar card');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('aadharCard', aadharCard);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/register-for-owner`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success('Registration request submitted successfully!');
+        // Reset form
+        setAadharCard(null);
+        setAgreementChecked(false);
+        // Reset file input
+        const fileInput = document.getElementById('aadharCard');
+        if (fileInput) fileInput.value = '';
+      } else {
+        toast.error(response.data.message || 'Failed to submit registration request');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error.response?.data?.message || 'Failed to submit registration request');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!userLogined) {
+    return (
+      <div className='flex justify-center items-center min-h-screen bg-gray-900'>
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Please Login First</h2>
+          <p className="text-gray-400">You need to be logged in to register as a venue owner.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className='flex lg:flex-row flex-col justify-center items-center min-h-screen lg:py-0 py-10 mx-auto container gap-0'>
-      <div className='flex-col animate-fade-in overflow-visible p-10 bg-gray-50 w-full rounded-xl shadow-md max-w-xl'>
-        <h1 className='text-4xl font-bold text-gray-800'>Contact Us</h1>
-        <p className='text-gray-800 mt-2 mb-5'>Feel free to contact us for any queries</p>
-        <form onSubmit={""}>
-          <div className="mb-4">
-            <div className="flex items-center border rounded-md px-3 py-2 bg-white shadow-md">
+    <div className='flex lg:flex-row flex-col justify-center items-center min-h-screen lg:py-0 py-10 my-20 mx-auto container gap-0 bg-gray-900'>
+      <div className='flex-col animate-fade-in overflow-visible p-10 bg-gray-800/20 w-full rounded-xl shadow-md max-w-xl'>
+        <h1 className='text-4xl font-bold text-white mb-2'>Owner Registration</h1>
+        <p className='text-gray-400 mb-6'>Upload your Aadhar card to register as a venue owner</p>
+        
+        <div className="bg-gray-800/30 p-4 rounded-lg shadow-md mb-6">
+          <h3 className="font-semibold text-white mb-4">Your Details</h3>
+          <div className="space-y-3">
+            <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
-              <input
-                type="text"
-                required
-                placeholder="Enter your name"
-                className="w-full bg-transparent text-gray-800 outline-none"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+              <span className="text-gray-300">{user.fullname}</span>
             </div>
-          </div>
-          <div className="mb-4">
-            <div className="flex items-center border rounded-md px-3 py-2 bg-white shadow-md">
+            <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
-              <input
-                type="email"
-                required
-                placeholder="Email address"
-                className="w-full bg-transparent text-gray-800 outline-none"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <span className="text-gray-300">{user.email}</span>
+            </div>
+            <div className="flex items-center">
+              <MdPhone className='text-gray-400 mr-2 h-5 w-5'/>
+              <span className="text-gray-300">{user.mobile}</span>
             </div>
           </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="mb-6">
-            <div className="flex items-center border rounded-md px-3 py-2 bg-white shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="text-gray-400 mr-2 h-5 w-5" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M798-120q-125 0-247-54.5T329-329Q229-429 174.5-551T120-798q0-18 12-30t30-12h162q14 0 25 9.5t13 22.5l26 140q2 16-1 27t-11 19l-97 98q20 37 47.5 71.5T387-386q31 31 65 57.5t72 48.5l94-94q9-9 23.5-13.5T670-390l138 28q14 4 23 14.5t9 23.5v162q0 18-12 30t-30 12ZM241-600l66-66-17-94h-89q5 41 14 81t26 79Zm358 358q39 17 79.5 27t81.5 13v-88l-94-19-67 67ZM241-600Zm358 358Z" /></svg>
+            <div className="flex items-center border border-gray-800/30 rounded-md px-3 py-2 bg-gray-800/30 shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+              </svg>
               <input
-                type="number"
+                type="file"
+                id="aadharCard"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="w-full bg-transparent text-gray-100 outline-none"
                 required
-                placeholder="Mobile no."
-                className="w-full bg-transparent text-gray-800 outline-none"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
               />
             </div>
+            <p className="text-sm text-gray-400 mt-1">Upload your Aadhar card (PDF only, Max size: 5MB)</p>
           </div>
-          <div className="mb-6">
-            <div className="flex items-start border rounded-md px-3 py-2 bg-white shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" className="text-gray-400 mr-2 mt-1 h-5 w-5" width="24px" fill="currentColor"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z" /></svg>
-              <textarea
-                type={'textarea'}
+
+          <div className="bg-gray-800/30 p-4 rounded-lg">
+            <h3 className="font-semibold text-white mb-2">Rules and Regulations:</h3>
+            <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
+              <li>You must be at least 18 years old to register as a venue owner.</li>
+              <li>The Aadhar card must be valid and not expired.</li>
+              <li>You are responsible for maintaining accurate venue information.</li>
+              <li>All venue listings must comply with local laws and regulations.</li>
+              <li>You must respond to booking inquiries within 24 hours.</li>
+              <li>Venue photos must be recent and accurately represent the space.</li>
+              <li>Pricing must be transparent and include all applicable charges.</li>
+              <li>You must maintain proper hygiene and safety standards.</li>
+              <li>Any changes to venue details must be updated promptly.</li>
+              <li>You agree to cooperate with platform audits and verifications.</li>
+            </ul>
+          </div>
+
+          <div className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                type="checkbox"
+                id="agreement"
+                checked={agreementChecked}
+                onChange={(e) => setAgreementChecked(e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-600 rounded focus:ring-orange-500 bg-gray-700"
                 required
-                placeholder="Enter your message"
-                className="w-full bg-transparent text-gray-800 outline-none"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
               />
             </div>
+            <div className="ml-3">
+              <label htmlFor="agreement" className="text-sm text-gray-300">
+                I agree to the rules and regulations and confirm that all information provided is accurate.
+              </label>
+            </div>
           </div>
+
           <button
             type="submit"
-            className={`w-full font-semibold text-white py-2 px-4 rounded-md transition duration-300 shadow-md ${isLoading ? 'bg-orange-400' : 'bg-orange-950 hover:bg-orange-900 '}`}
-            disabled={isLoading}
+            className={`w-full font-semibold text-white py-2 px-4 rounded-md transition duration-300 shadow-md ${
+              isLoading || !agreementChecked || !aadharCard
+                ? 'bg-orange-600/20 cursor-not-allowed'
+                : 'bg-orange-600 hover:bg-orange-700'
+            }`}
+            disabled={isLoading || !agreementChecked || !aadharCard}
           >
-            Send Message
+            {isLoading ? 'Submitting...' : 'Submit Registration'}
           </button>
         </form>
       </div>

@@ -9,31 +9,41 @@ import Loader from '../components/Loader'
 const Explorepage = () => {
   const [priceRange, setPriceRange] = useState([0, 500000])
   const [parkingFacility, setParkingFacility] = useState('')
-  const [peopleCapacity, setPeopleCapacity] = useState(1)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [filteredVenues, setFilteredVenues] = useState([])
   const [allVenues, setAllVenues] = useState([])
   const [city, setCity] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [venueType, setVenueType] = useState('')
+  const [eventType, setEventType] = useState('')
+  const [foodOption, setFoodOption] = useState('')
+  const [decorationOption, setDecorationOption] = useState('')
+  const [cancellation, setCancellation] = useState('')
   const filterRef = useRef(null)
-  const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 768)
+  const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 960)
   const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const observer = useRef()
-  const debounceTimerRef = useRef(null)
+  const [scrollTopVisible, setScrollTopVisible] = useState(false)
+
+  const venueTypes = [
+    { value: 'banquet', label: 'Banquet' },
+    { value: 'conference', label: 'Conference' },
+    { value: 'wedding', label: 'Wedding' },
+    { value: 'party', label: 'Party' }
+  ]
 
   useEffect(() => {
     AOS.init({ duration: 1000 })
-    
+
     // Initial API call to fetch all venues when page loads
     fetchAllVenues()
-    
+
     const handleResize = () => {
-      setIsSmallDevice(window.innerWidth < 768)
+      setIsSmallDevice(window.innerWidth < 960)
     }
-    
+
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -56,32 +66,13 @@ const Explorepage = () => {
         document.body.style.overflow = 'auto'
       }
     }
-    
+
     return () => {
       // Cleanup: ensure scrolling is restored when component unmounts
       document.body.style.overflow = 'auto'
     }
   }, [isFilterOpen, isSmallDevice])
 
-  // Setup intersection observer for infinite scroll with debouncing
-  const lastVenueElementRef = useCallback(node => {
-    if (loading) return
-    if (observer.current) observer.current.disconnect()
-    
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        // Debounce the scroll loading
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-        
-        debounceTimerRef.current = setTimeout(() => {
-          setPage(prevPage => prevPage + 1)
-          loadMoreVenues()
-        }, 300) // 300ms debounce delay
-      }
-    }, { threshold: 0.5 })
-    
-    if (node) observer.current.observe(node)
-  }, [loading, hasMore])
 
   // Add a useEffect to ensure body overflow is reset when component unmounts
   useEffect(() => {
@@ -91,7 +82,7 @@ const Explorepage = () => {
       if (!document.body.classList.contains('sidebar-expanded')) {
         document.body.style.overflow = 'auto';
       }
-      
+
       // Remove any potential overlay elements
       const overlay = document.getElementById('filter-overlay');
       if (overlay) {
@@ -100,30 +91,22 @@ const Explorepage = () => {
     };
   }, []);
 
-  const toggleFilter = (open) => {
+  const toggleFilter = useCallback((open) => {
     setIsFilterOpen(open);
-    
-    if (open && isSmallDevice) {
-      // When opening filter on small devices, ensure it doesn't interfere with navbar
-      // Only set overflow hidden if no sidebar is open
-      if (!document.body.classList.contains('sidebar-expanded')) {
-        document.body.style.overflow = 'hidden';
-      }
-      
-      if (filterRef.current) {
-        // Scroll to the filter with offset to avoid navbar overlap
+
+    if (isSmallDevice) {
+      // Handle body scroll
+      document.body.style.overflow = open ? 'hidden' : 'auto';
+
+      // Scroll to top when opening filter
+      if (open) {
         window.scrollTo({
           top: 0,
           behavior: 'smooth'
         });
       }
-    } else {
-      // When closing, restore normal scrolling only if no sidebar is open
-      if (!document.body.classList.contains('sidebar-expanded')) {
-        document.body.style.overflow = 'auto';
-      }
     }
-  };
+  }, [isSmallDevice]);
 
   // Fetch all venues from the API
   const fetchAllVenues = async () => {
@@ -135,7 +118,8 @@ const Explorepage = () => {
         throw new Error('Network response was not ok')
       }
 
-      const venues = response.data.venues || response.data || []
+      const venues = response.data.venues || response.data || [];
+      console.log(venues);
       setAllVenues(venues)
       setFilteredVenues(venues)
       setLoading(false)
@@ -144,69 +128,48 @@ const Explorepage = () => {
       setLoading(false)
     }
   }
-
-  // Load more venues on scroll
-  const loadMoreVenues = async () => {
-    if (!hasMore || loading) return
-    
-    try {
-      setLoading(true)
-      // Use the same API endpoint with current filter parameters and next page
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/venues`,
-        {
-          priceRange,
-          parkingFacility,
-          peopleCapacity,
-          city,
-          searchTerm,
-          page: page,
-          limit: 10
-        }
-      )
-
-      if (response.status !== 200) {
-        throw new Error('Network response was not ok')
-      }
-
-      setFilteredVenues(prev => [...prev, ...(response.data.venues || response.data || [])])
-      setHasMore(response.data.hasMore || false)
-      setLoading(false)
-    } catch (error) {
-      console.error('Error loading more venues:', error)
-      setLoading(false)
-    }
-  }
-
   // Apply filters client-side
   const applyFilters = () => {
     setLoading(true)
-    
+
     // Filter venues based on current filter criteria
     const filtered = allVenues.filter(venue => {
-      // Price range filter
-      const priceInRange = venue.price >= priceRange[0] && venue.price <= priceRange[1]
-      
       // Parking facility filter
-      const matchesParking = parkingFacility === '' || venue.parkingFacility === parkingFacility
-      
-      // People capacity filter
-      const hasCapacity = venue.peopleCapacity >= peopleCapacity
-      
+      const matchesParking = parkingFacility === '' ||
+        (parkingFacility === 'yes' && venue.parking?.available) ||
+        (parkingFacility === 'no' && !venue.parking?.available)
+
       // City filter
       const matchesCity = city === '' || venue.city.toLowerCase() === city.toLowerCase()
-      
+
+      // Venue type filter
+      const matchesType = venueType === '' || venue.type.toLowerCase() === venueType.toLowerCase()
+
+      // Event type filter
+      const matchesEvent = eventType === '' || venue.events?.includes(eventType)
+
+      // Cancellation filter
+      const matchesCancellation = cancellation === '' ||
+        (cancellation === 'yes' && venue.cancellation) ||
+        (cancellation === 'no' && !venue.cancellation)
+
       // Search term filter
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch = searchTerm === '' ||
         venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        venue.type.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      return priceInRange && matchesParking && hasCapacity && matchesCity && matchesSearch
+        venue.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        venue.description.toLowerCase().includes(searchTerm.toLowerCase())
+
+      return matchesParking &&
+        matchesCity &&
+        matchesType &&
+        matchesEvent &&
+        matchesCancellation &&
+        matchesSearch
     })
-    
+
     setFilteredVenues(filtered)
     setLoading(false)
-    
+
     // Close filter menu on small devices after applying filters
     if (isSmallDevice) {
       toggleFilter(false)
@@ -216,183 +179,197 @@ const Explorepage = () => {
   const resetFilters = (e) => {
     e.preventDefault()
     setSearchTerm('')
-    setPriceRange([0, 500000])
     setParkingFacility('')
-    setPeopleCapacity(1)
     setCity('')
-    
+    setVenueType('')
+    setEventType('')
+    setCancellation('')
+
     // Reset to all venues
     setFilteredVenues(allVenues)
-    
+
     // Close filter menu on small devices after resetting filters
     if (isSmallDevice) {
       toggleFilter(false)
     }
   }
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollTopVisible(window.scrollY > 100);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className='flex mx-auto transition-all bg-gray-900 text-white' style={{ marginTop: '60px' }}>
+    <div className='flex mx-auto transition-all mb-10 bg-gray-900 text-white' style={{ marginTop: '60px' }}>
       {loading ? (
         <div className="w-full min-h-screen flex items-center justify-center">
           <Loader />
         </div>
       ) : (
         <div className='min-h-screen container mx-auto flex flex-col items-center w-full lg:flex-row lg:items-start pt-0 mt-0'>
-          {/* Filter menu */}
-          {isFilterOpen && isSmallDevice && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-30"
-              onClick={() => toggleFilter(false)}
-              style={{ top: '60px' }}
-            ></div>
-          )}
-          <div 
+          {/* Filter Button Container */}
+          <div className={`fixed right-4 mb-2 z-40 transition-all duration-300 ${scrollTopVisible ? 'bottom-16' : 'bottom-4'
+            }`}>
+            <button
+              className={`bg-orange-600 hover:bg-orange-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all duration-300 ${isFilterOpen ? 'bg-orange-700' : ''
+                } lg:hidden`}
+              onClick={() => toggleFilter(!isFilterOpen)}
+              aria-label="Toggle filters"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Filter Menu */}
+          <div
             ref={filterRef}
-            className={`bg-gray-800 lg:w-64 w-full lg:min-h-screen lg:sticky p-5 
-                       transition-all duration-500 ease-in-out 
-                       ${isFilterOpen ? 'opacity-100 transform translate-y-0' : 'lg:opacity-100 max-h-0 opacity-0 overflow-hidden transform -translate-y-10 lg:transform-none lg:max-h-screen'} 
-                       lg:block lg:opacity-100 lg:max-h-screen lg:my-0 lg:mt-0`} 
-            data-aos={!isSmallDevice ? "fade-down" : ""}
+            className={`bg-gray-600/20 lg:w-64 w-full lg:min-h-screen lg:sticky p-4 
+                         transition-all duration-500 ease-in-out 
+                         ${!isFilterOpen && 'lg:block hidden'}
+                         ${isFilterOpen && 'fixed inset-0 w-full lg:static lg:w-64'}`}
             style={{
-              zIndex: isSmallDevice ? 40 : 5,
-              position: isSmallDevice && isFilterOpen ? 'fixed' : 'sticky',
-              top: isSmallDevice && isFilterOpen ? '60px' : '0',
-              borderRadius: isSmallDevice && isFilterOpen ? '8px' : '0',
-              boxShadow: isSmallDevice && isFilterOpen ? '0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
-              width: isSmallDevice && isFilterOpen ? '90%' : 'auto',
-              left: isSmallDevice && isFilterOpen ? '5%' : 'auto',
-              right: isSmallDevice && isFilterOpen ? '5%' : 'auto',
-              maxHeight: isSmallDevice && isFilterOpen ? 'calc(100vh - 70px)' : 'none',
-              overflowY: isSmallDevice && isFilterOpen ? 'auto' : 'visible'
+              zIndex: 40,
+              borderRadius: !isSmallDevice ? '0' : '0',
+              maxHeight: !isSmallDevice ? 'none' : '100vh',
+              overflowY: 'auto',
+              top: '60px',
             }}
           >
-            <div className='flex justify-between mb-5'>
+            <div className='flex justify-between mb-3'>
               <h2 className='text-lg font-bold text-orange-500'>Filter Options</h2>
               <button
-                className='bg-orange-600 hover:bg-orange-700 transition-colors text-white font-bold py-2 px-4 rounded lg:hidden'
+                className='bg-orange-600 hover:bg-orange-700 transition-colors lg:hidden block text-white font-bold p-2 rounded'
                 onClick={() => toggleFilter(false)}
               >
-                <svg xmlns='http://www.w3.org/2000/svg' className='h-6 w-6' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <svg xmlns='http://www.w3.org/2000/svg' className='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
                 </svg>
               </button>
             </div>
-            <div className='mx-auto lg:w-full w-64 flex flex-col items-center text-gray-200'>
-              <div className='mx-auto lg:w-full w-64 flex flex-col mb-5'>
-                <label className='block text-sm font-medium mb-2'>Search Venue:</label>
-                <div className='flex items-center'>
-                  <input
-                    type='text'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder='Search by name'
-                    className='p-2 rounded-lg bg-gray-700 text-gray-200 border border-gray-600 focus:ring-orange-500 focus:border-orange-500 flex-grow lg:w-full w-64'
-                  />
-                </div>
+            <div className='flex flex-col items-center text-gray-200 space-y-5'>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>Search Venue:</label>
+                <input
+                  type='text'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder='Search by name'
+                  className='p-2 w-full rounded-lg bg-gray-800 text-gray-100 border border-gray-600 focus:ring-orange-500 focus:border-orange-500'
+                />
               </div>
-              <div className='mx-auto lg:w-full w-64 flex flex-col mb-5'>
-                <label className='block text-sm font-medium mb-2'>Price Range:</label>
-                <div className='flex justify-between mb-2'>
-                  <input
-                    type='number'
-                    value={priceRange[0]}
-                    onChange={(e) => setPriceRange([Math.max(0, e.target.value), priceRange[1]])}
-                    className='p-2 rounded-lg bg-gray-700 text-gray-200 border border-gray-600 focus:ring-orange-500 focus:border-orange-500 w-24 text-center'
-                  />
-                  <span className='flex items-center text-gray-200'>to</span>
-                  <input
-                    type='number'
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], Math.min(500000, e.target.value)])}
-                    className='p-2 rounded-lg bg-gray-700 text-gray-200 border border-gray-600 focus:ring-orange-500 focus:border-orange-500 w-24 text-center'
-                  />
-                </div>
-              </div>
-              <div className='mx-auto lg:w-full w-64 flex flex-col mb-5'>
-                <label className='block text-sm font-medium mb-2'>Food Catering Required?:</label>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>Venue Type:</label>
                 <select
-                  className='block lg:w-full w-64 p-2 text-sm rounded-lg border bg-gray-700 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-200'
+                  className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
+                  value={venueType}
+                  onChange={(e) => setVenueType(e.target.value)}
+                >
+                  <option value='' className="bg-gray-800 text-gray-100">All Types</option>
+                  {venueTypes.map((type) => (
+                    <option key={type.value} value={type.value} className="bg-gray-800 text-gray-100">
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>Event Type:</label>
+                <select
+                  className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value)}
+                >
+                  <option value='' className="bg-gray-800 text-gray-100">All Events</option>
+                  <option value='wedding' className="bg-gray-800 text-gray-100">Wedding</option>
+                  <option value='corporate' className="bg-gray-800 text-gray-100">Corporate</option>
+                  <option value='birthday' className="bg-gray-800 text-gray-100">Birthday</option>
+                  <option value='conference' className="bg-gray-800 text-gray-100">Conference</option>
+                </select>
+              </div>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>Cancellation Policy:</label>
+                <select
+                  className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
+                  value={cancellation}
+                  onChange={(e) => setCancellation(e.target.value)}
+                >
+                  <option value='' className="bg-gray-800 text-gray-100">All Options</option>
+                  <option value='yes' className="bg-gray-800 text-gray-100">Cancellation Available</option>
+                  <option value='no' className="bg-gray-800 text-gray-100">No Cancellation</option>
+                </select>
+              </div>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>Food Catering Required?:</label>
+                <select
+                  className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
                   value={parkingFacility}
                   onChange={(e) => setParkingFacility(e.target.value)}
                 >
-                  <option value=''>Not selected</option>
-                  <option value='yes'>Yes</option>
-                  <option value='no'>No</option>
+                  <option value='' className="bg-gray-800 text-gray-100">Not selected</option>
+                  <option value='yes' className="bg-gray-800 text-gray-100">Yes</option>
+                  <option value='no' className="bg-gray-800 text-gray-100">No</option>
                 </select>
               </div>
-              <div className='mx-auto lg:w-full w-64 flex flex-col mb-5'>
-                <label className='block text-sm font-medium mb-2'>People Capacity:</label>
-                <div className='flex justify-between mb-2'>
-                  <span>{peopleCapacity}</span>
-                </div>
-                <input
-                  type='range'
-                  min='1'
-                  max='9999'
-                  step='50'
-                  value={peopleCapacity}
-                  onChange={(e) => setPeopleCapacity(e.target.value)}
-                  className='lg:w-full w-64 h-2 mb-2 range-input'
-                />
-              </div>
-              <div className='mx-auto lg:w-full w-64 flex flex-col'>
-                <label className='block text-sm font-medium mb-2'>City:</label>
+              <div className='w-full'>
+                <label className='block text-sm font-medium mb-1'>City:</label>
                 <select
-                  className='block lg:w-full w-64 p-2 rounded-lg text-sm border border-gray-600 focus:ring-orange-500 focus:border-orange-500 bg-gray-700 text-gray-200'
+                  className='block w-full p-2 rounded-lg text-sm border border-gray-600 focus:ring-orange-500 focus:border-orange-500 bg-gray-800 text-gray-100'
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                 >
-                  <option value=''>Select City</option>
-                  <option value='Surat'>Surat</option>
-                  <option value='Ahemdabad'>Ahemdabad</option>
+                  <option value='' className="bg-gray-800 text-gray-100">Select City</option>
+                  <option value='Surat' className="bg-gray-800 text-gray-100">Surat</option>
+                  <option value='Ahemdabad' className="bg-gray-800 text-gray-100">Ahemdabad</option>
                 </select>
               </div>
-              <div className='flex justify-between w-full mt-5'>
+              <div className='flex justify-between w-full pt-3'>
                 <button
-                  className='bg-orange-600 hover:bg-orange-700 transition-colors text-white font-bold py-2 px-4 rounded w-1/2 mr-2'
+                  className='bg-orange-600 hover:bg-orange-700 transition-colors text-white font-bold py-2 px-3 rounded w-1/2 mr-2 text-sm'
                   onClick={resetFilters}
                 >
                   Reset
                 </button>
                 <button
-                  className='bg-orange-600 hover:bg-orange-700 transition-colors text-white font-bold py-2 px-4 rounded w-1/2 ml-2'
-                  onClick={applyFilters} // Apply filters client-side
+                  className='bg-orange-600 hover:bg-orange-700 transition-colors text-white font-bold py-2 px-3 rounded w-1/2 ml-2 text-sm'
+                  onClick={applyFilters}
                 >
                   Apply
                 </button>
               </div>
             </div>
           </div>
-          <div className={`w-100 mx-auto transition-all duration-500 ease-in-out ${isFilterOpen && isSmallDevice ? 'opacity-75' : 'opacity-100'}`}>
-            {!isFilterOpen && isSmallDevice && (
-              <div className='fixed top-16 right-4 z-20'>
-                <button
-                  className='bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 flex items-center'
-                  onClick={() => toggleFilter(true)}
-                  style={{
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)'
-                  }}
-                >
-                  <span className="mr-2">Filters</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            )}
-            <div className='sm:p-5 grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 font-medium gap-5' data-aos="fade-up">
+          <div className={`w-full lg:flex-1 transition-all duration-500 ease-in-out ${isFilterOpen && isSmallDevice ? 'hidden' : 'block'}`}>
+            <div className='sm:p-5 p-0 grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 font-medium gap-5 place-items-center' data-aos="fade-up">
               {filteredVenues.length > 0 ? filteredVenues.map((venue, index) => (
-                <VenueCard
-                  key={venue.id || index}
-                  name={venue.name}
-                  city={venue.city}
-                  rating={venue.rating}
-                  type={venue.type}
-                  inquiry={venue.inquiry}
-                  id={venue.id}
-                  price={venue.price}
-                  capacity={venue.peopleCapacity}
-                />
+                <div className="w-full flex justify-center">
+                  <VenueCard
+                    key={venue._id || index}
+                    name={venue.name}
+                    image={venue.photos[0]}
+                    city={venue.city}
+                    rating={venue.rating || 4}
+                    type={venue.type}
+                    id={venue._id}
+                    bookingPay={venue.bookingPay}
+                  />
+                </div>
               )) : (
                 <div className="col-span-full flex justify-center items-center pt-16">
                   <p className='text-white text-xl'>No any Venue Available</p>
@@ -400,6 +377,14 @@ const Explorepage = () => {
               )}
             </div>
           </div>
+          {/* Overlay */}
+          {isFilterOpen && !isSmallDevice && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-30"
+              onClick={() => toggleFilter(false)}
+              style={{ top: '60px' }}
+            />
+          )}
         </div>
       )}
     </div>

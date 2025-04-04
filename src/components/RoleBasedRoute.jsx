@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/auth';
-import { hasRole, getRedirectPath } from '../utils/roleUtils';
+import { hasRole, getRedirectPath } from '../utils/roleUtils.jsx';
 import Loader from './Loader';
 import toast from 'react-hot-toast';
 

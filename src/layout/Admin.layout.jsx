@@ -12,11 +12,13 @@ import AdminVenues from '../pages/admin/AdminVenues';
 import AdminOwners from '../pages/admin/AdminOwners';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminProfile from '../pages/admin/AdminProfile';
+import AdminBookings from '../pages/admin/AdminBookings';
 import AdminSettings from '../pages/admin/AdminSettings';
 import PendingVenues from '../pages/admin/PendingVenues';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import AdminFooter from '../components/AdminFooter';
+import PendingOwners from '../pages/admin/PendingOwners';
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -58,15 +60,16 @@ const AdminLayout = () => {
                         <Routes>
                             <Route index element={<AdminAnalytics />} />
                             {/* <Route path="/venues" element={<AdminVenues />} /> */}
-                            <Route path="/venues/pending" element={<PendingVenues searchTerm={searchTerm}/>} />
                             {/* <Route path='/' element={<AdminDashboard />} /> */}
                             <Route path='/users' element={<AdminUsers searchTerm={searchTerm} />} />
                             <Route path='/venues' element={<AdminVenues searchTerm={searchTerm} />} />
+                            <Route path='/bookings' element={<AdminBookings searchTerm={searchTerm} />} />
                             <Route path='/owners' element={<AdminOwners searchTerm={searchTerm} />} />
                             <Route path='/analytics' element={<AdminAnalytics />} />
                             <Route path='/profile' element={<AdminProfile />} />
                             <Route path='/settings' element={<AdminSettings />} />
-                            <Route path='/pending-venues' element={<PendingVenues />} />
+                            <Route path="/venues/pending" element={<PendingVenues searchTerm={searchTerm}/>} />
+                            <Route path='/owners/pending' element={<PendingOwners earchTerm={searchTerm}/>} />
 
                             <Route path='/*' element={<NotFoundPage />} />
                         </Routes>
