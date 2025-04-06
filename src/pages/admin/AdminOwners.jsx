@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete, MdBlock, MdLocationOn, MdPhone, MdPending } from 'react-icons/md';
+import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
@@ -9,6 +10,11 @@ const AdminOwners = ({ searchTerm }) => {
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    venueCount: 'all',
+    joinDate: 'all'
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,16 +44,58 @@ const AdminOwners = ({ searchTerm }) => {
 
   const filteredOwners = owners.filter(owner => {
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm = (
       (owner.fullname || '').toLowerCase().includes(searchTermLower) ||
       (owner.email || '').toLowerCase().includes(searchTermLower) ||
       (owner.mobile || '').toString().includes(searchTermLower)
     );
+    
+    // Apply venue count filter if selected
+    let matchesVenueCount = true;
+    if (filterOptions.venueCount !== 'all') {
+      const count = owner.venueCount || 0;
+      switch (filterOptions.venueCount) {
+        case 'none':
+          matchesVenueCount = count === 0;
+          break;
+        case 'one':
+          matchesVenueCount = count === 1;
+          break;
+        case 'multiple':
+          matchesVenueCount = count > 1;
+          break;
+        default:
+          matchesVenueCount = true;
+      }
+    }
+    
+    // Apply join date filter if selected
+    let matchesJoinDate = true;
+    if (filterOptions.joinDate !== 'all') {
+      const joinDate = new Date(owner.joinedDate);
+      const now = new Date();
+      const oneMonthAgo = new Date(now.setMonth(now.getMonth() - 1));
+      const threeMonthsAgo = new Date(now.setMonth(now.getMonth() - 2)); // -3 total
+      const sixMonthsAgo = new Date(now.setMonth(now.getMonth() - 3)); // -6 total
+      
+      switch (filterOptions.joinDate) {
+        case 'lastMonth':
+          matchesJoinDate = joinDate >= oneMonthAgo;
+          break;
+        case 'last3Months':
+          matchesJoinDate = joinDate >= threeMonthsAgo;
+          break;
+        case 'last6Months':
+          matchesJoinDate = joinDate >= sixMonthsAgo;
+          break;
+        default:
+          matchesJoinDate = true;
+      }
+    }
+    
+    return matchesSearchTerm && matchesVenueCount && matchesJoinDate;
   });
 
-
-
-  
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
@@ -75,6 +123,55 @@ const AdminOwners = ({ searchTerm }) => {
           <MdPending className="mr-2" />
           Pending Applications
         </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h5 className="text-lg font-semibold text-gray-900">
+            {filteredOwners.length} {filteredOwners.length === 1 ? 'Owner' : 'Owners'} Found
+          </h5>
+          <div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            >
+              <FaFilter />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Venue Count</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.venueCount}
+                onChange={(e) => setFilterOptions({...filterOptions, venueCount: e.target.value})}
+              >
+                <option value="all">All Owners</option>
+                <option value="none">No Venues</option>
+                <option value="one">One Venue</option>
+                <option value="multiple">Multiple Venues</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Join Date</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.joinDate}
+                onChange={(e) => setFilterOptions({...filterOptions, joinDate: e.target.value})}
+              >
+                <option value="all">All Time</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="last3Months">Last 3 Months</option>
+                <option value="last6Months">Last 6 Months</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

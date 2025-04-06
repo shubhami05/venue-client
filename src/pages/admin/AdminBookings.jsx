@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdPerson, MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck } from 'react-icons/md';
+import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
@@ -8,6 +9,12 @@ const AdminBookings = ({ searchTerm = '' }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    bookedOn: 'all',
+    bookingDate: 'all',
+    venueName: 'all'
+  });
 
   useEffect(() => {
     fetchBookings();
@@ -38,13 +45,91 @@ const AdminBookings = ({ searchTerm = '' }) => {
 
   const filteredBookings = bookings.filter(booking => {
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm = (
       (booking.venue?.name || '').toLowerCase().includes(searchTermLower) ||
       (booking.user?.name || '').toLowerCase().includes(searchTermLower) ||
       (booking.user?.email || '').toLowerCase().includes(searchTermLower) ||
       (booking.venue?.city || '').toLowerCase().includes(searchTermLower)
     );
+
+    // Apply booked on filter if selected
+    let matchesBookedOn = true;
+    if (filterOptions.bookedOn !== 'all') {
+      const bookedOnDate = new Date(booking.createdAt);
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const lastWeek = new Date(today);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      
+      switch (filterOptions.bookedOn) {
+        case 'today':
+          matchesBookedOn = bookedOnDate.toDateString() === today.toDateString();
+          break;
+        case 'yesterday':
+          matchesBookedOn = bookedOnDate.toDateString() === yesterday.toDateString();
+          break;
+        case 'lastWeek':
+          matchesBookedOn = bookedOnDate >= lastWeek && bookedOnDate <= today;
+          break;
+        case 'lastMonth':
+          matchesBookedOn = bookedOnDate >= lastMonth && bookedOnDate <= today;
+          break;
+        default:
+          matchesBookedOn = true;
+      }
+    }
+
+    // Apply booking date filter if selected
+    let matchesBookingDate = true;
+    if (filterOptions.bookingDate !== 'all') {
+      const bookingDate = new Date(booking.date);
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      const nextWeek = new Date(today);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      
+      switch (filterOptions.bookingDate) {
+        case 'today':
+          matchesBookingDate = bookingDate.toDateString() === today.toDateString();
+          break;
+        case 'tomorrow':
+          matchesBookingDate = bookingDate.toDateString() === tomorrow.toDateString();
+          break;
+        case 'thisWeek':
+          matchesBookingDate = bookingDate >= today && bookingDate < nextWeek;
+          break;
+        case 'thisMonth':
+          matchesBookingDate = bookingDate >= today && bookingDate < nextMonth;
+          break;
+        default:
+          matchesBookingDate = true;
+      }
+    }
+
+    // Apply venue name filter if selected
+    const matchesVenue = filterOptions.venueName === 'all' || 
+      booking.venue?.name === filterOptions.venueName;
+
+    return matchesSearchTerm && matchesBookedOn && matchesBookingDate && matchesVenue;
   });
+
+  // Get unique venue names for the filter dropdown
+  const venueNames = [...new Set(bookings
+    .map(booking => booking.venue?.name)
+    .filter(Boolean))];
 
   const getTimeslotLabel = (timeslot) => {
     switch (timeslot) {
@@ -68,6 +153,71 @@ const AdminBookings = ({ searchTerm = '' }) => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Booking Management</h1>
       </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h5 className="text-lg font-semibold text-gray-900">
+            {filteredBookings.length} {filteredBookings.length === 1 ? 'Booking' : 'Bookings'} Found
+          </h5>
+          <div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            >
+              <FaFilter />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Booked On</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.bookedOn}
+                onChange={(e) => setFilterOptions({...filterOptions, bookedOn: e.target.value})}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="lastMonth">Last Month</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.bookingDate}
+                onChange={(e) => setFilterOptions({...filterOptions, bookingDate: e.target.value})}
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="thisWeek">This Week</option>
+                <option value="thisMonth">This Month</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.venueName}
+                onChange={(e) => setFilterOptions({...filterOptions, venueName: e.target.value})}
+              >
+                <option value="all">All Venues</option>
+                {venueNames.map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+      </div>
+
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (

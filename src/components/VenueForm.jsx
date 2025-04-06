@@ -6,7 +6,18 @@ import { MdCloudUpload, MdDelete } from 'react-icons/md';
 import toast from 'react-hot-toast';
 import ImageUpload from './ImageUpload';
 
-const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
+const VenueForm = ({ 
+  initialData, 
+  onSubmit, 
+  isEditing = false,
+  venueTypes = [],
+  eventTypes = [],
+  cities = [],
+  amenities = []
+}) => {
+  // Add debugging logs
+  console.log('VenueForm Props:', { venueTypes, eventTypes, cities, amenities });
+  
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -51,18 +62,15 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
     cancellationPolicy: ''
   });
 
-  const [venueTypes, setVenueTypes] = useState([]);
-  const [venueCities, setVenueCities] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [images, setImages] = useState([]);
   const [removedImages, setRemovedImages] = useState([]);
-  const [eventList, setEventList] = useState([]);
   const [customEvent, setCustomEvent] = useState('');
   const [selectedEvent, setSelectedEvent] = useState('');
 
-  // List of common amenities
-  const amenitiesList = [
+  // Default amenities list if none provided
+  const defaultAmenitiesList = [
     'Parking',
     'WiFi',
     'Air Conditioning',
@@ -73,6 +81,9 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
     'Restrooms'
   ];
 
+  // Use provided amenities or default list
+  const amenitiesList = amenities.length > 0 ? amenities : defaultAmenitiesList;
+  
   useEffect(() => {
     // console.log(initialData);  
     if (initialData) {
@@ -129,13 +140,6 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
         })));
       }
     }
-
-    // Fetch venue types from an API in the future
-    setVenueTypes(['Banquet Hall', 'Conference Center', 'Outdoor Venue', 'Hotel']);
-    setVenueCities(['Surat', 'Ahmedabad', 'Vadodara', 'Rajkot', 'Mumbai']);
-
-    // Fetch event list - this would be an API call in production
-    setEventList(['Wedding', 'Birthday Party', 'Corporate Event', 'Conference', 'Seminar', 'Anniversary', 'Baby Shower', 'Engagement']);
   }, [initialData]);
 
   const handleChange = (e) => {
@@ -384,6 +388,9 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
 
   return (
     <div className="min-h-screen container py-10 bg-orange-50">
+      {/* Debugging section */}
+     
+
       <form onSubmit={handleSubmit} className="mx-auto p-4 bg-zinc-50 rounded-md shadow-lg">
         <div className='flex items-center gap-2'>
           <button
@@ -446,8 +453,8 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
               className="mt-1 block w-full shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-8 pl-2"
             >
               <option value="" disabled>Select City</option>
-              {venueCities.map((name, index) => (
-                <option key={index} value={name}>{name}</option>
+              {cities.map((city, index) => (
+                <option key={index} value={city}>{city}</option>
               ))}
             </select>
           </div>
@@ -508,7 +515,7 @@ const VenueForm = ({ initialData, onSubmit, isEditing = false }) => {
                   className="flex-grow shadow-md border-gray-300 bg-white rounded-md focus:border-blue-500 focus:ring focus:ring-blue-200 h-10 pl-2"
                 >
                   <option value="">Select an event type</option>
-                  {eventList.map((event, index) => (
+                  {eventTypes.map((event, index) => (
                     <option key={index} value={event}>{event}</option>
                   ))}
                   <option value="custom">+ Add Custom Event</option>

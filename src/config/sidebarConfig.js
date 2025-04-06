@@ -10,7 +10,9 @@ import {
   MdSettings,
   MdSupervisorAccount,
   MdAnalytics,
-  MdBookOnline
+  MdBookOnline,
+  MdReviews,
+  MdEmail
 } from "react-icons/md";
 
 export const sidebarConfig = {
@@ -80,9 +82,24 @@ export const sidebarConfig = {
         label: 'Bookings'
       },
       {
+        path: '/admin/reviews',
+        icon: MdReviews,
+        label: 'Reviews'
+      },
+      {
+        path: '/admin/inquiries',
+        icon: MdQuestionAnswer,
+        label: 'Inquiries'
+      },
+      {
         path: '/admin/users',
         icon: MdPeople,
         label: 'Users'
+      },
+      { 
+        path: '/admin/contact',
+        icon: MdEmail,
+        label: 'Contact'
       },
     
     ],

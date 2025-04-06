@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdEdit, MdDelete, MdBlock, MdStar, MdLocationOn, MdPerson, MdPending, MdViewCozy, MdHideImage, MdMail, MdPhone } from 'react-icons/md';
+import { FaFilter, FaStar } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
@@ -13,6 +14,11 @@ const AdminVenues = ({ searchTerm }) => {
   const [error, setError] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    city: 'all',
+    ownerEmail: 'all'
+  });
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     title: '',
@@ -81,13 +87,22 @@ const AdminVenues = ({ searchTerm }) => {
 
   const filteredVenues = venues.filter(venue => {
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm = (
       (venue.name || '').toLowerCase().includes(searchTermLower) ||
       (venue.owner?.name || '').toLowerCase().includes(searchTermLower) ||
       (venue.owner?.email || '').toLowerCase().includes(searchTermLower) ||
       (venue.owner?.phone || '').toLowerCase().includes(searchTermLower) ||
       (venue.city || '').toLowerCase().includes(searchTermLower)
     );
+
+    // Apply city filter if selected
+    const matchesCity = filterOptions.city === 'all' || venue.city === filterOptions.city;
+
+    // Apply owner email filter if selected
+    const matchesOwnerEmail = filterOptions.ownerEmail === 'all' || 
+      venue.owner?.email === filterOptions.ownerEmail;
+
+    return matchesSearchTerm && matchesCity && matchesOwnerEmail;
   });
 
   const handleEdit = (venueId) => {
@@ -131,6 +146,23 @@ const AdminVenues = ({ searchTerm }) => {
     });
   };
 
+  // Get unique cities for filter dropdown
+  const cities = [...new Set(venues.map(venue => venue.city).filter(Boolean))];
+
+  // Get unique owner emails for filter dropdown
+  const ownerEmails = [...new Set(venues.map(venue => venue.owner?.email).filter(Boolean))];
+
+  // Render star rating
+  const renderStars = (rating) => {
+    return (
+      <div className="flex text-orange-500">
+        {[...Array(5)].map((_, i) => (
+          <FaStar key={i} className={i < rating ? "text-orange-500" : "text-gray-300"} />
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
@@ -151,80 +183,143 @@ const AdminVenues = ({ searchTerm }) => {
           Pending Venues
         </button>
       </div>
+      
       {error ? (<p>{error}</p> 
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr className="bg-orange-600 text-orange-50">
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVenues.map((venue) => (
-                <tr 
-                  key={venue._id}
-                  onClick={() => handleRowClick(venue._id)}
-                  className="cursor-pointer hover:bg-gray-50"
+        <>
+          {/* Filters */}
+          <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <h5 className="text-lg font-semibold text-gray-900">
+                {filteredVenues.length} {filteredVenues.length === 1 ? 'Venue' : 'Venues'} Found
+              </h5>
+              <div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{venue.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <MdPerson className="h-4 w-4 mr-1" />
-                      {venue.owner?.name || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdLocationOn className="h-4 w-4 mr-1" />
-                        {venue.city || 'N/A'}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col space-y-1">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdMail className="h-4 w-4 mr-1" />
-                        {venue.owner?.email || 'N/A'}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdPhone className="h-4 w-4 mr-1" />
-                        {venue.owner?.phone || 'N/A'}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      ₹{venue.withoutFoodRent?.fullday || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleStatus(venue._id);
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Remove Venue"
-                      >
-                        <MdHideImage className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
+                  <FaFilter />
+                  <span>Filters</span>
+                </button>
+              </div>
+            </div>
+
+            {showFilters && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <select
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                    value={filterOptions.city}
+                    onChange={(e) => setFilterOptions({...filterOptions, city: e.target.value})}
+                  >
+                    <option value="all">All Cities</option>
+                    {cities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Owner Email</label>
+                  <select
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                    value={filterOptions.ownerEmail}
+                    onChange={(e) => setFilterOptions({...filterOptions, ownerEmail: e.target.value})}
+                  >
+                    <option value="all">All Owner Emails</option>
+                    {ownerEmails.map(email => (
+                      <option key={email} value={email}>{email}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr className="bg-orange-600 text-orange-50">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rating</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredVenues.map((venue) => (
+                  <tr 
+                    key={venue._id}
+                    onClick={() => handleRowClick(venue._id)}
+                    className="cursor-pointer hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{venue.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <MdPerson className="h-4 w-4 mr-1" />
+                        {venue.owner?.name || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <MdLocationOn className="h-4 w-4 mr-1" />
+                          {venue.city || 'N/A'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col space-y-1">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <MdMail className="h-4 w-4 mr-1" />
+                          {venue.owner?.email || 'N/A'}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-900">
+                          <MdPhone className="h-4 w-4 mr-1" />
+                          {venue.owner?.phone || 'N/A'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {venue.rating ? (
+                        <div className="flex items-center">
+                          {renderStars(venue.rating)}
+                          <span className="ml-1 text-sm text-gray-700">({venue.rating.toFixed(1)})</span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-500">No ratings</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        ₹{venue.withoutFoodRent?.fullday || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleStatus(venue._id);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Remove Venue"
+                        >
+                          <MdHideImage className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Venue Details Modal */}

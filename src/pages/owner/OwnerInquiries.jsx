@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEnvelope, FaUser, FaBuilding, FaCalendarAlt, FaReply, FaComment } from 'react-icons/fa';
+import { FaEnvelope, FaUser, FaBuilding, FaCalendarAlt, FaReply, FaComment, FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import Loader from '../../components/Loader';
 import toast from 'react-hot-toast';
@@ -16,6 +16,14 @@ function OwnerInquiries({ searchTerm = '' }) {
   const itemsPerPage = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [currentItems, setCurrentItems] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    venue: 'all',
+    eventType: 'all',
+    dateRange: 'all'
+  });
+  const [venues, setVenues] = useState([]);
+  const [eventTypes, setEventTypes] = useState([]);
 
   // Add a useEffect to handle body scroll locking
   useEffect(() => {
@@ -49,17 +57,59 @@ function OwnerInquiries({ searchTerm = '' }) {
 
   // Filter and paginate inquiries
   useEffect(() => {
-    const filteredInquiries = inquiries.filter(inquiry =>
-      (inquiry.user?.name?.toLowerCase() || '').includes((debouncedSearchTerm || '').toLowerCase()) ||
-      (inquiry.venue?.name?.toLowerCase() || '').includes((debouncedSearchTerm || '').toLowerCase()) ||
-      (inquiry.message?.toLowerCase() || '').includes((debouncedSearchTerm || '').toLowerCase())
-    );
+    let filtered = inquiries;
+
+    // Filter by venue
+    if (filterOptions.venue !== 'all') {
+      filtered = filtered.filter(inquiry => inquiry.venue._id === filterOptions.venue);
+    }
+    
+    // Filter by event type
+    if (filterOptions.eventType !== 'all') {
+      filtered = filtered.filter(inquiry => inquiry.eventType === filterOptions.eventType);
+    }
+    
+    // Filter by date range
+    const currentDate = new Date();
+    if (filterOptions.dateRange === 'today') {
+      filtered = filtered.filter(inquiry => {
+        const inquiryDate = new Date(inquiry.date);
+        return inquiryDate.toDateString() === currentDate.toDateString();
+      });
+    } else if (filterOptions.dateRange === 'week') {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      filtered = filtered.filter(inquiry => {
+        const inquiryDate = new Date(inquiry.date);
+        return inquiryDate >= oneWeekAgo;
+      });
+    } else if (filterOptions.dateRange === 'month') {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      filtered = filtered.filter(inquiry => {
+        const inquiryDate = new Date(inquiry.date);
+        return inquiryDate >= oneMonthAgo;
+      });
+    }
+
+    // Apply search term
+    if (debouncedSearchTerm && debouncedSearchTerm.trim()) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(inquiry =>
+        (inquiry.user?.name?.toLowerCase() || '').includes(searchLower) ||
+        (inquiry.venue?.name?.toLowerCase() || '').includes(searchLower) ||
+        (inquiry.message?.toLowerCase() || '').includes(searchLower)
+      );
+    }
+
+    // Sort by date (newest first)
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    setCurrentItems(filteredInquiries.slice(indexOfFirstItem, indexOfLastItem));
-    setTotalPages(Math.ceil(filteredInquiries.length / itemsPerPage));
-  }, [inquiries, debouncedSearchTerm, currentPage]);
+    setCurrentItems(filtered.slice(indexOfFirstItem, indexOfLastItem));
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+  }, [inquiries, debouncedSearchTerm, currentPage, filterOptions]);
 
   const fetchInquiries = async () => {
     try {
@@ -68,6 +118,22 @@ function OwnerInquiries({ searchTerm = '' }) {
 
       if (response.data.success) {
         setInquiries(response.data.formattedInquiries);
+        
+        // Extract unique venues and event types for filter dropdowns
+        const uniqueVenues = [...new Set(response.data.formattedInquiries.map(inquiry => inquiry.venue._id))];
+        const venueOptions = uniqueVenues.map(venueId => {
+          const venueInquiry = response.data.formattedInquiries.find(inquiry => inquiry.venue._id === venueId);
+          return {
+            id: venueId,
+            name: venueInquiry.venue.name
+          };
+        });
+        
+        const uniqueEventTypes = [...new Set(response.data.formattedInquiries.map(inquiry => inquiry.eventType))];
+        
+        setVenues(venueOptions);
+        setEventTypes(uniqueEventTypes);
+        
         setError(null);
       } else {
         setError(response.data.message || 'Failed to fetch inquiries');
@@ -109,131 +175,194 @@ function OwnerInquiries({ searchTerm = '' }) {
   }
 
   return (
-    <div className="rounded-sm border border-stroke text-orange-900 bg-orange-50 shadow-default dark:border-strokedark dark:bg-boxdark px-2 sm:px-5 min-h-screen">
+    <div className="rounded-sm border border-stroke text-orange-900 bg-orange-100 shadow-default dark:border-strokedark dark:bg-boxdark px-2 sm:px-5 min-h-screen">
       <div className="py-6 px-2 sm:px-6 xl:px-7">
         <h4 className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-white">
           Customer Inquiries
         </h4>
       </div>
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="bg-orange-600 text-orange-50">
-              <th className="py-4 px-2 text-left">Customer</th>
-              <th className="py-4 px-2 text-left">Venue</th>
-              <th className="py-4 px-2 text-left">Event Type</th>
-              <th className="py-4 px-2 text-left">Event Date</th>
-              <th className="py-4 px-2 text-left">Received On</th>
-              <th className="py-4 px-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentItems.length > 0 ? (
-              currentItems.map((inquiry) => (
-                <tr key={inquiry._id} className="border-b border-orange-100 bg-zinc-50 hover:bg-orange-100 transition-colors">
-                  <td className="py-3 px-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{inquiry.user.name}</span>
-                      <span className="text-xs text-gray-500">{inquiry.user.email}</span>
-                      <span className="text-xs text-gray-500">{inquiry.user.phone}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{inquiry.venue.name}</span>
-                      <span className="text-xs text-gray-500">{inquiry.venue.city}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-2">{inquiry.eventType}</td>
-                  <td className="py-3 px-2">{formatDate2(inquiry.date)}</td>
-                  <td className="py-3 px-2">{formatDate(inquiry.createdAt)}</td>
-                  <td className="py-3 px-2">
-                    <button
-                      onClick={() => handleViewInquiry(inquiry)}
-                      className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center space-x-1"
-                    >
-                      <FaEnvelope size={14} />
-                      <span>View</span>
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6" className="py-4 text-center text-gray-500">
-                  No inquiries found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h5 className="text-lg font-semibold text-gray-900">
+            {currentItems.length} {currentItems.length === 1 ? 'Inquiry' : 'Inquiries'} Found
+          </h5>
+          <div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            >
+              <FaFilter />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
 
-      {/* Mobile Cards */}
-      <div className="md:hidden">
-        {currentItems.length > 0 ? (
-          currentItems.map((inquiry) => (
-            <div key={inquiry._id} className="bg-zinc-50 rounded-lg shadow mb-4 border border-orange-100">
-              <div className="p-4 border-b border-orange-100 flex justify-between items-center">
-                <h3 className="font-bold text-lg truncate">{inquiry.venue.name}</h3>
-                <button
-                  onClick={() => handleViewInquiry(inquiry)}
-                  className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center space-x-1"
-                >
-                  <FaEnvelope size={14} />
-                  <span>View</span>
-                </button>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="flex items-start space-x-2">
-                  <FaUser className="mt-1 text-orange-600" />
-                  <div>
-                    <p className="font-medium">{inquiry.user.name}</p>
-                    <p className="text-sm text-gray-500">{inquiry.user.email}</p>
-                    <p className="text-sm text-gray-500">{inquiry.user.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <FaBuilding className="mt-1 text-orange-600" />
-                  <div>
-                    <p className="font-medium">{inquiry.venue.type}</p>
-                    <p className="text-sm text-gray-500">{inquiry.venue.city}</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <FaCalendarAlt className="mt-1 text-orange-600" />
-                  <div>
-                    <p className="text-sm font-medium">Event Date: {formatDate(inquiry.date)}</p>
-                    <p className="text-sm text-gray-500">Received: {formatDate(inquiry.createdAt)}</p>
-                  </div>
-                </div>
-              </div>
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.venue}
+                onChange={(e) => setFilterOptions({...filterOptions, venue: e.target.value})}
+              >
+                <option value="all">All Venues</option>
+                {venues.map(venue => (
+                  <option key={venue.id} value={venue.id}>{venue.name}</option>
+                ))}
+              </select>
             </div>
-          ))
-        ) : (
-          <div className="bg-zinc-50 rounded-lg shadow p-4 text-center text-gray-500">
-            No inquiries found
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.eventType}
+                onChange={(e) => setFilterOptions({...filterOptions, eventType: e.target.value})}
+              >
+                <option value="all">All Event Types</option>
+                {eventTypes.map((type, index) => (
+                  <option key={index} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.dateRange}
+                onChange={(e) => setFilterOptions({...filterOptions, dateRange: e.target.value})}
+              >
+                <option value="all">All Dates</option>
+                <option value="today">Today</option>
+                <option value="week">Last 7 Days</option>
+                <option value="month">Last 30 Days</option>
+              </select>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Desktop Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-6">
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-orange-600 text-white">
+                <th className="px-4 py-3 text-left">Customer</th>
+                <th className="px-4 py-3 text-left">Venue</th>
+                <th className="px-4 py-3 text-left">Event Type</th>
+                <th className="px-4 py-3 text-left">Event Date</th>
+                <th className="px-4 py-3 text-left">Received On</th>
+                <th className="px-4 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentItems.length > 0 ? (
+                currentItems.map((inquiry) => (
+                  <tr key={inquiry._id} className="border-b border-gray-200 hover:bg-orange-50">
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{inquiry.user.name}</span>
+                        <span className="text-xs text-gray-500">{inquiry.user.email}</span>
+                        <span className="text-xs text-gray-500">{inquiry.user.phone}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{inquiry.venue.name}</span>
+                        <span className="text-xs text-gray-500">{inquiry.venue.city}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{inquiry.eventType}</td>
+                    <td className="px-4 py-3">{formatDate2(inquiry.date)}</td>
+                    <td className="px-4 py-3">{formatDate(inquiry.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleViewInquiry(inquiry)}
+                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center space-x-1"
+                      >
+                        <FaEnvelope size={14} />
+                        <span>View</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-4 py-6 text-center text-gray-500">
+                    No inquiries found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden">
+          {currentItems.length > 0 ? (
+            currentItems.map((inquiry) => (
+              <div key={inquiry._id} className="border-b border-gray-200 p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="font-medium text-gray-900">{inquiry.venue.name}</div>
+                    <div className="text-sm text-gray-600">{inquiry.venue.city}</div>
+                  </div>
+                  <button
+                    onClick={() => handleViewInquiry(inquiry)}
+                    className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center space-x-1"
+                  >
+                    <FaEnvelope size={14} />
+                    <span>View</span>
+                  </button>
+                </div>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-start space-x-2">
+                    <FaUser className="mt-1 text-orange-600" />
+                    <div>
+                      <p className="font-medium">{inquiry.user.name}</p>
+                      <p className="text-xs text-gray-500">{inquiry.user.email}</p>
+                      <p className="text-xs text-gray-500">{inquiry.user.phone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <FaCalendarAlt className="mt-1 text-orange-600" />
+                    <div>
+                      <p className="text-sm text-gray-700"><span className="font-medium">Event:</span> {inquiry.eventType}</p>
+                      <p className="text-sm text-gray-700"><span className="font-medium">Date:</span> {formatDate2(inquiry.date)}</p>
+                      <p className="text-xs text-gray-500"><span className="font-medium">Received:</span> {formatDate(inquiry.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-4 text-center text-gray-500">
+              No inquiries found
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center py-4 flex-wrap">
-          {Array.from({ length: totalPages }, (_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentPage(index + 1)}
-              className={`m-1 px-3 py-1 rounded ${currentPage === index + 1
-                ? 'bg-orange-500 text-white'
-                : 'bg-orange-200 text-orange-900'
-                }`}
-            >
-              {index + 1}
-            </button>
-          ))}
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="flex flex-wrap space-x-1">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-orange-100'
+                  }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

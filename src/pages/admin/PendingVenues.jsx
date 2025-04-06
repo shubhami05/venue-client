@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdLocationOn, MdPerson, MdCheck, MdClose, MdArrowBack, MdInfo, MdPhone, MdEmail, MdAccessTime, MdEvent, MdCategory, MdHouse } from 'react-icons/md';
+import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
@@ -14,6 +15,11 @@ const PendingVenues = ({ searchTerm = '' }) => {
   const [error, setError] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    submissionDate: 'all',
+    city: 'all'
+  });
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     title: '',
@@ -79,12 +85,53 @@ const PendingVenues = ({ searchTerm = '' }) => {
   const filteredVenues = venues.filter(venue => {
     if (!searchTerm) return true;
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm = (
       (venue.name || '').toLowerCase().includes(searchTermLower) ||
       (venue.owner?.name || '').toLowerCase().includes(searchTermLower) ||
       (venue.city || '').toLowerCase().includes(searchTermLower)
     );
+
+    // Apply city filter if selected
+    const matchesCity = filterOptions.city === 'all' || venue.city === filterOptions.city;
+
+    // Apply submission date filter if selected
+    let matchesSubmissionDate = true;
+    if (filterOptions.submissionDate !== 'all') {
+      const submissionDate = new Date(venue.submittedAt);
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const lastWeek = new Date(today);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      
+      switch (filterOptions.submissionDate) {
+        case 'today':
+          matchesSubmissionDate = submissionDate.toDateString() === today.toDateString();
+          break;
+        case 'yesterday':
+          matchesSubmissionDate = submissionDate.toDateString() === yesterday.toDateString();
+          break;
+        case 'lastWeek':
+          matchesSubmissionDate = submissionDate >= lastWeek && submissionDate <= today;
+          break;
+        case 'lastMonth':
+          matchesSubmissionDate = submissionDate >= lastMonth && submissionDate <= today;
+          break;
+        default:
+          matchesSubmissionDate = true;
+      }
+    }
+    
+    return matchesSearchTerm && matchesCity && matchesSubmissionDate;
   });
+
+  // Get unique cities for filter dropdown
+  const cities = [...new Set(venues.map(venue => venue.city).filter(Boolean))];
 
   const handleStatusChange = async (venueId, newStatus) => {
     const venue = venues.find(v => v._id === venueId);
@@ -160,6 +207,56 @@ const PendingVenues = ({ searchTerm = '' }) => {
           </button>
           <h1 className="text-2xl font-bold">Pending Venues</h1>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h5 className="text-lg font-semibold text-gray-900">
+            {filteredVenues.length} {filteredVenues.length === 1 ? 'Venue' : 'Venues'} Found
+          </h5>
+          <div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            >
+              <FaFilter />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.city}
+                onChange={(e) => setFilterOptions({...filterOptions, city: e.target.value})}
+              >
+                <option value="all">All Cities</option>
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Submission Date</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.submissionDate}
+                onChange={(e) => setFilterOptions({...filterOptions, submissionDate: e.target.value})}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="lastMonth">Last Month</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

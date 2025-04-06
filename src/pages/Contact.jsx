@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import img1 from '../assets/Contact_img.png'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Contactpage = () => {
   const [email, setEmail] = useState('')
@@ -8,13 +10,47 @@ const Contactpage = () => {
   const [message, setMessage] = useState('')
   const [isLoading, setLoading] = useState(false)
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setLoading(true);
+      
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/contact`,
+        {
+          fullname: name,
+          email,
+          mobile,
+          message
+        }
+      );
+      
+      if (response.data.success) {
+        toast.success(response.data.message || 'Message sent successfully!');
+        // Clear form fields after successful submission
+        setName('');
+        setEmail('');
+        setMobile('');
+        setMessage('');
+      } else {
+        toast.error(response.data.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Error sending contact message:', error);
+      toast.error(error.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className='flex lg:flex-row flex-col justify-center items-center min-h-screen lg:py-0 py-10 mx-auto container gap-10'>
 
       <div className='flex-col animate-fade-in overflow-visible p-10 bg-gray-50 w-full rounded-xl shadow-md max-w-xl'>
         <h1 className='text-4xl font-bold text-gray-800'>Contact Us</h1>
         <p className='text-gray-800 mt-2 mb-5'>Feel free to contact us for any queries</p>
-        <form onSubmit={""}>
+        <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <div className="flex items-center border rounded-md px-3 py-2 bg-white shadow-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -74,10 +110,10 @@ const Contactpage = () => {
           </div>
           <button
             type="submit"
-            className={`w-full font-semibold text-white py-2 px-4 rounded-md transition duration-300 shadow-md ${isLoading ? 'bg-orange-400' : 'bg-orange-950 hover:bg-orange-900 '}`}
+            className={`w-full font-semibold text-white py-2 px-4 rounded-md transition duration-300 shadow-md ${isLoading ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-950 hover:bg-orange-900 '}`}
             disabled={isLoading}
           >
-            Send Message
+            {isLoading ? 'Sending...' : 'Send Message'}
           </button>
         </form>
       </div>

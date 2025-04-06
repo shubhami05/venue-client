@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdPerson, MdCheck, MdClose, MdArrowBack, MdEmail, MdPhone, MdAccessTime, MdBadge } from 'react-icons/md';
+import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
@@ -10,6 +11,10 @@ const PendingOwners = ({ searchTerm = '' }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    submissionDate: 'all'
+  });
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     title: '',
@@ -84,11 +89,47 @@ const PendingOwners = ({ searchTerm = '' }) => {
   const filteredApplications = applications.filter(application => {
     if (!searchTerm) return true;
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    
+    const matchesSearchTerm = (
       (application.name || '').toLowerCase().includes(searchTermLower) ||
       (application.email || '').toLowerCase().includes(searchTermLower) ||
       (application.phone || '').toLowerCase().includes(searchTermLower)
     );
+    
+    // Apply submission date filter if selected
+    let matchesSubmissionDate = true;
+    if (filterOptions.submissionDate !== 'all') {
+      const submissionDate = new Date(application.submittedAt);
+      const now = new Date();
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const lastWeek = new Date(today);
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      
+      switch (filterOptions.submissionDate) {
+        case 'today':
+          matchesSubmissionDate = submissionDate.toDateString() === today.toDateString();
+          break;
+        case 'yesterday':
+          matchesSubmissionDate = submissionDate.toDateString() === yesterday.toDateString();
+          break;
+        case 'lastWeek':
+          matchesSubmissionDate = submissionDate >= lastWeek && submissionDate <= today;
+          break;
+        case 'lastMonth':
+          matchesSubmissionDate = submissionDate >= lastMonth && submissionDate <= today;
+          break;
+        default:
+          matchesSubmissionDate = true;
+      }
+    }
+    
+    return matchesSearchTerm && matchesSubmissionDate;
   });
 
   if (loading) {
@@ -127,6 +168,43 @@ const PendingOwners = ({ searchTerm = '' }) => {
           </button>
           <h1 className="text-2xl font-bold">Pending Owner Applications</h1>
         </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h5 className="text-lg font-semibold text-gray-900">
+            {filteredApplications.length} {filteredApplications.length === 1 ? 'Application' : 'Applications'} Found
+          </h5>
+          <div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+            >
+              <FaFilter />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
+
+        {showFilters && (
+          <div className="mt-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Submission Date</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.submissionDate}
+                onChange={(e) => setFilterOptions({...filterOptions, submissionDate: e.target.value})}
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="lastMonth">Last Month</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

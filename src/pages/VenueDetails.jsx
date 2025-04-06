@@ -3,12 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarCheck, FaParking, FaUtensils, FaPaintBrush, FaCheck, FaTimes, FaList, FaMoneyBill, FaQuestionCircle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarCheck, FaParking, FaUtensils, FaPaintBrush, FaCheck, FaTimes, FaList, FaMoneyBill, FaQuestionCircle, FaStar, FaRegStar, FaStarHalfAlt, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { Modal } from 'flowbite-react';
 import toast from 'react-hot-toast';
 import Loader from '../components/Loader';
 import { motion } from 'framer-motion';
-import { FaX } from 'react-icons/fa6';
+import { FaXmark } from 'react-icons/fa6';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -38,11 +38,31 @@ const VenueDetails = () => {
     numberOfGuest: ''
   });
   const [showBookingModal, setShowBookingModal] = useState(false);
+
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [userReview, setUserReview] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [newReview, setNewReview] = useState({
+    rating: 5,
+    message: ''
+  });
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchVenueDetails();
   }, [venueId]);
+
+  useEffect(() => {
+    if (venue) {
+      fetchVenueReviews();
+    }
+  }, [venue]);
 
   const fetchVenueDetails = async () => {
     try {
@@ -56,6 +76,114 @@ const VenueDetails = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchVenueReviews = async () => {
+    try {
+      setLoadingReviews(true);
+      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/venue/reviews/${venueId}`);
+      if (response.data.success) {
+        setReviews(response.data.reviews);
+        
+        // Check if user has already reviewed
+        try {
+          const userReviewsResponse = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/fetch`);
+          if (userReviewsResponse.data.success) {
+            const existingReview = userReviewsResponse.data.reviews.find(
+              review => review.venue._id === venueId
+            );
+            setUserReview(existingReview || null);
+          }
+        } catch (error) {
+          console.log("Not logged in or couldn't fetch user reviews");
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!newReview.message.trim()) {
+      toast.error('Please enter a review message');
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/create`, {
+        venueId,
+        rating: newReview.rating,
+        message: newReview.message
+      });
+
+      if (response.data.success) {
+        toast.success('Review submitted successfully!');
+        setShowReviewModal(false);
+        setNewReview({ rating: 5, message: '' });
+        // Refresh reviews
+        await fetchVenueReviews();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit review');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    setReviewToDelete(reviewId);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const confirmDeleteReview = async () => {
+    try {
+      setLoadingReviews(true);
+      const response = await axios.delete(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/delete/${reviewToDelete}`);
+      
+      if (response.data.success) {
+        toast.success('Review deleted successfully');
+        setUserReview(null);
+        await fetchVenueReviews();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete review');
+    } finally {
+      setLoadingReviews(false);
+      setShowDeleteConfirmModal(false);
+    }
+  };
+
+  // Star rating component
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 1; i <= 5; i++) {
+      if (i <= fullStars) {
+        stars.push(<FaStar key={i} className="text-orange-500" />);
+      } else if (i === fullStars + 1 && hasHalfStar) {
+        stars.push(<FaStarHalfAlt key={i} className="text-orange-500" />);
+      } else {
+        stars.push(<FaRegStar key={i} className="text-orange-500" />);
+      }
+    }
+
+    return (
+      <div className="flex">{stars}</div>
+    );
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const handleInquirySubmit = async (e) => {
@@ -100,7 +228,7 @@ const VenueDetails = () => {
       console.log(venueId, availabilityForm.date, availabilityForm.timeslot);
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/venue/check-availability`, {
         venueId,
-        date: availabilityForm.date.toISOString().split('T')[0],
+        date: availabilityForm.date,
         timeslot: parseInt(availabilityForm.timeslot)
       });
       setavailabilityStatus(response.data);
@@ -306,10 +434,10 @@ const VenueDetails = () => {
                   ))}
                 </div>
               </div>
-
+              {venue.amenities.length > 0 && (
               <div className="mb-6">
                 <h4 className="text-lg font-semibold text-gray-800 mb-3">Amenities</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {venue.amenities.map((amenity, index) => (
                     <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
                       <FaCheck className="text-green-600" />
@@ -318,17 +446,20 @@ const VenueDetails = () => {
                   ))}
                 </div>
               </div>
+              )}
+              {venue.restrictions.length > 0 && (
               <div>
                 <h4 className="text-lg font-semibold text-gray-800 mb-3">Restrictions</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {venue.restrictions.map((restriction, index) => (
                     <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
-                      <FaX className="text-red-600" />
+                      <FaXmark className="text-red-600" />
                       <span className="text-gray-800">{restriction}</span>
                     </div>
                   ))}
                 </div>
               </div>
+              )}
             </div>
 
             {/* Description Card */}
@@ -425,14 +556,99 @@ const VenueDetails = () => {
           <div className="bg-white mt-5 rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">About this Venue</h3>
             <p className="text-gray-700 leading-relaxed text-lg">{venue.description}</p>
-
           </div> 
-          {venue.cancellation && (
+          {venue.cancellationPolicy && (
           <div className="bg-white mt-5 rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Cancellation Policy</h3>
-            <p className="text-gray-700 leading-relaxed text-lg">{venue.cancellation}</p>
+            <p className="text-gray-700 leading-relaxed text-lg">{venue.cancellationPolicy}</p>
           </div>
           )}
+        </motion.div>
+
+        {/* Reviews Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="col-span-full mt-8"
+        >
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">Reviews & Ratings</h3>
+                <div className="flex items-center mt-2">
+                  {renderStars(venue.rating || 0)}
+                  <span className="ml-2 text-gray-700 font-medium">
+                    {venue.rating ? parseFloat(venue.rating).toFixed(1) : "0"} · {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                  </span>
+                </div>
+              </div>
+              <div>
+                {!userReview ? (
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="bg-orange-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center"
+                  >
+                    <FaStar className="mr-2" />
+                    Write a Review
+                  </button>
+                ) : (
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleDeleteReview(userReview._id)}
+                      className="bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center"
+                    >
+                      <FaTrash className="mr-2" />
+                      Delete My Review
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {loadingReviews ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="bg-orange-50 rounded-lg p-6 text-center">
+                <p className="text-gray-700">No reviews yet. Be the first to review this venue!</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <div key={review._id} className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-start">
+                        <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-800 font-bold text-xl mr-4">
+                          {review.user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{review.user.name}</h4>
+                          <div className="flex items-center space-x-2">
+                            <div className="flex text-sm">
+                              {renderStars(review.rating)}
+                            </div>
+                            <span className="text-sm text-gray-500">· {formatDate(review.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="ml-16">
+                      <p className="text-gray-700">{review.message}</p>
+                      
+                      {review.ownerReply && review.ownerReply.message && (
+                        <div className="mt-4 bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
+                          <p className="font-medium text-gray-900 mb-1">Response from venue owner</p>
+                          <p className="text-gray-700">{review.ownerReply.message}</p>
+                          <p className="text-sm text-gray-500 mt-1">{formatDate(review.ownerReply.createdAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
 
@@ -711,7 +927,123 @@ const VenueDetails = () => {
           </form>
         </Modal.Body>
       </Modal>
-    </div >
+
+      {/* Review Submission Modal */}
+      <Modal
+        show={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        size="md"
+      >
+        <Modal.Header className="text-gray-900 border-b border-gray-200 px-6 py-4">
+          Write a Review
+        </Modal.Header>
+        <Modal.Body className="px-6 py-6">
+          <form onSubmit={handleSubmitReview} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">Rating</label>
+              <div className="flex space-x-1 text-2xl">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                    className="focus:outline-none"
+                  >
+                    {star <= newReview.rating ? (
+                      <FaStar className="text-orange-500" />
+                    ) : (
+                      <FaRegStar className="text-orange-500" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-800 mb-2">Your Review</label>
+              <textarea
+                required
+                rows={6}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                value={newReview.message}
+                onChange={(e) => setNewReview({ ...newReview, message: e.target.value })}
+                placeholder="Share your experience with this venue..."
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                onClick={() => setShowReviewModal(false)}
+                disabled={reviewSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 flex items-center"
+                disabled={reviewSubmitting}
+              >
+                {reviewSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <FaStar className="mr-2 h-4 w-4" />
+                    Submit Review
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        show={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        size="md"
+      >
+        <Modal.Header className="text-gray-900 border-b border-gray-200 px-6 py-4">
+          Confirm Review Deletion
+        </Modal.Header>
+        <Modal.Body className="px-6 py-6">
+          <div className="text-center mb-4">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+              <FaExclamationTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Review?</h3>
+            <p className="text-gray-500">
+              Are you sure you want to delete your review? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-center space-x-4 pt-4">
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 border border-gray-300"
+              onClick={() => setShowDeleteConfirmModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 flex items-center"
+              onClick={confirmDeleteReview}
+            >
+              <FaTrash className="mr-2 h-4 w-4" />
+              Yes, Delete
+            </button>
+          </div>
+        </Modal.Body>
+      </Modal>
+    </div>
   );
 };
 

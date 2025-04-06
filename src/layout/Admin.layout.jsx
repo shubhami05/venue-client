@@ -19,6 +19,9 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import AdminFooter from '../components/AdminFooter';
 import PendingOwners from '../pages/admin/PendingOwners';
+import AdminReviews from '../pages/admin/AdminReviews';
+import AdminInquiries from '../pages/admin/AdminInquiries';
+import AdminContact from '../pages/admin/AdminContact';
 
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -65,6 +68,9 @@ const AdminLayout = () => {
                             <Route path='/venues' element={<AdminVenues searchTerm={searchTerm} />} />
                             <Route path='/bookings' element={<AdminBookings searchTerm={searchTerm} />} />
                             <Route path='/owners' element={<AdminOwners searchTerm={searchTerm} />} />
+                            <Route path='/reviews' element={<AdminReviews searchTerm={searchTerm} />} />
+                            <Route path='/inquiries' element={<AdminInquiries searchTerm={searchTerm} />} />
+                            <Route path='/contact' element={<AdminContact searchTerm={searchTerm} />} />
                             <Route path='/analytics' element={<AdminAnalytics />} />
                             <Route path='/profile' element={<AdminProfile />} />
                             <Route path='/settings' element={<AdminSettings />} />

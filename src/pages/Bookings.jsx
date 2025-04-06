@@ -26,7 +26,7 @@ const Bookingspage = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/fetch`
       );
-
+      console.log(response.data.bookings);
       if (response.data.success) {
         setBookings(response.data.bookings);
       } else {
@@ -51,15 +51,15 @@ const Bookingspage = () => {
     }
   };
 
+  const handleCancelBooking = (bookingId) => {
+    console.log(bookingId);
+  };
+
   const formatDate = (dateString) => {
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-  // Navigate to venue details page
-  const handleViewVenue = (venueId) => {
-    navigate(`/venue/${venueId}`);
-  };
 
   if (isLoading) {
     return <Loader />;
@@ -171,9 +171,16 @@ const Bookingspage = () => {
                             Pending
                           </span>
                         )}
-
+                        {booking.venue.cancellation && (
+                          <button
+                            onClick={handleCancelBooking(booking._id)}
+                            className='mt-2 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center'
+                          >
+                            Cancel Booking
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleViewVenue(booking.venue._id)}
+                          onClick={() => navigate(`/explore/venue/${booking.venue._id}`)}
                           className='mt-2 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center'
                         >
                           View Venue
