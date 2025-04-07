@@ -160,7 +160,7 @@ const OwnerVenues = ({ searchTerm }) => {
 
   return (
     <div className="rounded-sm border border-stroke text-orange-900 bg-orange-100 shadow-default dark:border-strokedark dark:bg-boxdark px-2 sm:px-5 min-h-screen">
-      <div className="py-6 px-2 sm:px-6 xl:px-7 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="py-6 px-2 sm:px-6 xl:px-7 flex flex-row justify-between items-start gap-4">
         <h4 className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-white">
           All Venues
         </h4>

@@ -30,7 +30,7 @@ const ScrollToTop = ({ onVisibilityChange }) => {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className="bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-orange-700 transition-opacity duration-300"
+          className="bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-orange-700 transition-all duration-300 hover:-translate-y-1"
         >
           <FaLongArrowAltUp/>
         </button>

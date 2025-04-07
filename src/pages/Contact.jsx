@@ -45,9 +45,9 @@ const Contactpage = () => {
   };
 
   return (
-    <div className='flex lg:flex-row flex-col justify-center items-center min-h-screen lg:py-0 py-10 mx-auto container gap-10'>
+    <div className='flex lg:flex-row flex-col-reverse justify-center items-center min-h-screen lg:py-0 sm:py-10 py-24 mx-auto container gap-10'>
 
-      <div className='flex-col animate-fade-in overflow-visible p-10 bg-gray-50 w-full rounded-xl shadow-md max-w-xl'>
+      <div className='flex flex-col animate-fade-in overflow-visible p-10 bg-gray-50 w-full rounded-xl shadow-md max-w-xl'>
         <h1 className='text-4xl font-bold text-gray-800'>Contact Us</h1>
         <p className='text-gray-800 mt-2 mb-5'>Feel free to contact us for any queries</p>
         <form onSubmit={handleSubmit}>
@@ -118,7 +118,7 @@ const Contactpage = () => {
         </form>
       </div>
 
-      <div className='flex-col animate-fade-in overflow-visible  w-full rounded-xl  px-3   max-w-xl items-end'>
+      <div className='flex flex-col animate-fade-in overflow-visible  w-full rounded-xl  px-3   max-w-xl sm:items-end items-start'>
         <h1 className='text-4xl font-bold flex justify-end text-white'>Contact Details</h1>
         <p className='text-white  flex justify-end mt-2 mb-5'>You can also reach us at:</p>
 

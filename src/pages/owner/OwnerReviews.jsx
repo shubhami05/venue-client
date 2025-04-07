@@ -25,6 +25,20 @@ function OwnerReviews({ searchTerm }) {
     fetchVenueReviews();
   }, []);
 
+  // Lock scroll when modal is open
+  useEffect(() => {
+    if (showViewModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showViewModal]);
+
   const fetchVenueReviews = async () => {
     try {
       setIsLoading(true);
@@ -93,6 +107,11 @@ function OwnerReviews({ searchTerm }) {
   const handleViewReview = (review) => {
     setSelectedReview(review);
     setShowViewModal(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setShowViewModal(false);
   };
 
   // Send email to customer
@@ -318,13 +337,13 @@ function OwnerReviews({ searchTerm }) {
 
       {/* View Review Modal */}
       {showViewModal && selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowViewModal(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleCloseModal}>
           <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="bg-orange-600 text-white p-4 flex justify-between items-center">
               <h3 className="text-lg font-bold">Review Details</h3>
               <button
-                onClick={() => setShowViewModal(false)}
-                className="text-white hover:text-orange-200 text-2xl leading-none"
+                onClick={handleCloseModal}
+                className="text-white bg-orange-600 hover:text-orange-200 text-3xl leading-none"
               >
                 ×
               </button>
@@ -358,7 +377,7 @@ function OwnerReviews({ searchTerm }) {
               <div className="flex justify-end">
                 <button
                   onClick={() => {
-                    setShowViewModal(false);
+                    handleCloseModal();
                     sendEmail(selectedReview);
                   }}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"

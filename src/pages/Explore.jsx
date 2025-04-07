@@ -204,7 +204,7 @@ const Explorepage = () => {
   }, []);
 
   return (
-    <div className='flex mx-auto transition-all mb-10 bg-gray-900 text-white' style={{ marginTop: '60px' }}>
+    <div className='flex mx-auto transition-all mb-10 bg-gray-900 text-white' style={{ paddingTop: '80px' }}>
       {loading ? (
         <div className="w-full min-h-screen flex items-center justify-center">
           <Loader />
@@ -212,7 +212,7 @@ const Explorepage = () => {
       ) : (
         <div className='min-h-screen container mx-auto flex flex-col items-center w-full lg:flex-row lg:items-start pt-0 mt-0'>
           {/* Filter Button Container */}
-          <div className={`fixed right-4 mb-2 z-40 transition-all duration-300 ${scrollTopVisible ? 'bottom-16' : 'bottom-4'
+          <div className={`fixed right-4 mb-2 z-10 transition-all duration-300 ${scrollTopVisible ? 'bottom-16' : 'bottom-4'
             }`}>
             <button
               className={`bg-orange-600 hover:bg-orange-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-all duration-300 ${isFilterOpen ? 'bg-orange-700' : ''
@@ -245,7 +245,7 @@ const Explorepage = () => {
                          ${!isFilterOpen && 'lg:block hidden'}
                          ${isFilterOpen && 'fixed inset-0 w-full lg:static lg:w-64'}`}
             style={{
-              zIndex: 40,
+              zIndex: 10,
               borderRadius: !isSmallDevice ? '0' : '0',
               maxHeight: !isSmallDevice ? 'none' : '100vh',
               overflowY: 'auto',
@@ -380,7 +380,7 @@ const Explorepage = () => {
           {/* Overlay */}
           {isFilterOpen && !isSmallDevice && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-30"
+              className="fixed inset-0 bg-black bg-opacity-50 z-5"
               onClick={() => toggleFilter(false)}
               style={{ top: '60px' }}
             />

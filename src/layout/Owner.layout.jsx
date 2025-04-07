@@ -63,8 +63,8 @@ const OwnerLayout = () => {
                             <Route path='/venues/new' element={<VenueForm />} />
                             <Route path='/venues/edit/:venueId' element={<EditVenue/>} />
                             <Route path='/reviews' element={<OwnerReviews searchTerm={searchTerm} />} />
-                            <Route path='/inquiries' element={<OwnerInquiries />} />
-                            <Route path='/bookings' element={<OwnerBookings />} />
+                            <Route path='/inquiries' element={<OwnerInquiries searchTerm={searchTerm} />} />
+                            <Route path='/bookings' element={<OwnerBookings searchTerm={searchTerm} />} />
                             <Route path='/gethelp' element={<OwnerGethelp />} />
                             <Route path='/profile' element={<OwnerProfile />} />
                             <Route path='/*' element={<NotFoundPage />} />

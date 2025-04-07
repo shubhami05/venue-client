@@ -42,7 +42,7 @@ const Header = ({ sidebarOpen, setSidebarOpen, setSearchTerm, searchTerm }) => {
                 <div className="hidden sm:block">
                     <form onSubmit={(e) => e.preventDefault()}>
                         <div className="relative">
-                            <button className="absolute left-0 top-1/2 -translate-y-1/2">
+                            <button className="absolute left-0 top-1/2 -translate-y-1/2 bg-transparent">
                                 <FaSearch className='w-6 h-6 text-zinc-300'/>
                             </button>
                             <input

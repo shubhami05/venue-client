@@ -298,7 +298,7 @@ const VenueDetails = () => {
       <div className="container  mx-auto px-4 pt-6">
         <button
           onClick={() => navigate('/explore')}
-          className="flex items-center text-orange-700 hover:text-orange-800 transition-colors font-medium"
+          className="flex bg-orange-100 items-center text-orange-700 hover:text-orange-800 transition-colors font-medium"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

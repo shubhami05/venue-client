@@ -66,7 +66,7 @@ const Bookingspage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-orange-100 to-orange-50 pt-8 pb-16'>
+    <div className='min-h-screen bg-gradient-to-b from-orange-100 to-orange-50 pt-8 pb-16' style={{ paddingTop: '80px' }}>
       <div className='container mx-auto px-4'>
 
 

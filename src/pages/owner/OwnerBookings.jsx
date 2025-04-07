@@ -501,7 +501,7 @@ function OwnerBookings({ searchTerm = '' }) {
               <h3 className="text-xl font-bold">Booking Details</h3>
               <button 
                 onClick={() => setShowModal(false)} 
-                className="text-white hover:text-orange-200 text-2xl leading-none"
+                className="text-white bg-orange-600 hover:text-orange-200 text-3xl leading-none"
               >
                 ×
               </button>

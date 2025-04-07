@@ -56,7 +56,7 @@ const Homepage = () => {
   }, []);
 
   return (
-    <div className='bg-gray-900'>
+    <div className='bg-gray-900' >
       {/* Hero section */}
       <section className="bg-gradient-to-b from-orange-100 to-orange-50 w-full">
         <div className='flex flex-col container min-h-screen items-center justify-center lg:gap-0 gap-10 lg:flex-row lg:justify-between mx-auto py-12' data-aos="fade-up">

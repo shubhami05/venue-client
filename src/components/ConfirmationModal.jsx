@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdCheck, MdClose, MdWarning } from 'react-icons/md';
+import { MdCheck, MdClose, MdLogout, MdWarning } from 'react-icons/md';
 
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 'warning' }) => {
   if (!isOpen) return null;
@@ -10,6 +10,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 
         return <MdCheck className="h-8 w-8 text-green-500" />;
       case 'danger':
         return <MdClose className="h-8 w-8 text-red-500" />;
+      case 'logout':
+        return <MdLogout className="h-8 w-8 text-orange-500" />;
       default:
         return <MdWarning className="h-8 w-8 text-yellow-500" />;
     }
@@ -21,6 +23,8 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, type = 
         return 'bg-green-600 hover:bg-green-700';
       case 'danger':
         return 'bg-red-600 hover:bg-red-700';
+      case 'logout':
+        return 'bg-orange-600 hover:bg-orange-700';
       default:
         return 'bg-yellow-600 hover:bg-yellow-700';
     }
