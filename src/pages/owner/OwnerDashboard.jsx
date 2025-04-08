@@ -264,13 +264,13 @@ const OwnerDashboard = () => {
                     </div>
                     <div className="flex flex-col">
                         <span className="text-3xl font-bold text-orange-900">{formatCurrency(analytics.totalRevenue)}</span>
-                        <span className="text-sm text-gray-600 mt-1">From all confirmed bookings</span>
+                        <span className="text-sm text-gray-600 mt-1">From all completed bookings</span>
                     </div>
                     <div className="mt-6">
                         <h3 className="text-sm font-medium text-gray-700 mb-2">Booking Status</h3>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-gray-600">Confirmed Bookings</span>
+                                <span className="text-gray-600">Completed Bookings</span>
                                 <span className="font-semibold text-green-600">{analytics.confirmedBookings}</span>
                             </div>
                             <div className="flex items-center justify-between">
