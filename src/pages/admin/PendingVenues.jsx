@@ -200,7 +200,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
         <div className="flex flex-col items-start justify-center space-x-4">
           <button
             onClick={() => navigate('/admin/venues')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
+            className="flex items-center bg-inherit font-semibold text-orange-600 hover:text-orange-900 transition-all "
           >
             <MdArrowBack className="mr-1" />
             Back to Venues

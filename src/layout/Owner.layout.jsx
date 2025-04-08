@@ -67,6 +67,7 @@ const OwnerLayout = () => {
                             <Route path='/bookings' element={<OwnerBookings searchTerm={searchTerm} />} />
                             <Route path='/gethelp' element={<OwnerGethelp />} />
                             <Route path='/profile' element={<OwnerProfile />} />
+                        
                             <Route path='/*' element={<NotFoundPage />} />
                         </Routes>
                     </main>

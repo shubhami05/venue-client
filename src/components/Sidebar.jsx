@@ -181,7 +181,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, role }) => {
                   <li key={item.path}>
                     <NavLink
                       to={item.path}
-                      className={`group lg:px-10 relative flex items-center gap-2.5 rounded-sm py-2 px-8 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-orange-600 dark:hover:bg-meta-4 ${
+                      className={`group lg:px-10 relative flex items-center gap-2.5 rounded-sm py-2 px-8 font-medium text-bodydark1 duration-300 ease-in-out hover:text-orange-50 hover:bg-orange-600 dark:hover:bg-meta-4 ${
                         pathname.includes(item.path) && 'bg-orange-600 dark:bg-meta-4'
                       }`}
                     >

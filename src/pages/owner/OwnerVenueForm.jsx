@@ -34,7 +34,7 @@ const OwnerVenueForm = () => {
                     }
                     
                     setConfigData(config);
-                } else {
+        } else {
                     setError(response.data.message || 'Failed to fetch configuration data');
                 }
             } catch (error) {
@@ -70,15 +70,15 @@ const OwnerVenueForm = () => {
     }
 
     if (error) {
-        return (
+    return (
             <div className="text-center p-6">
                 <p className="text-red-600 mb-4">{error}</p>
-                <button 
+                    <button
                     onClick={() => window.location.reload()}
                     className="bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
                 >
                     Try Again
-                </button>
+                    </button>
             </div>
         );
     }

@@ -142,7 +142,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
 
   if (error) {
     return (
-      <div className="p-4 text-center text-red-600">
+      <div className="p-4 text-center   text-red-600">
         <button
             onClick={() => navigate('/admin/owners')}
             className="flex items-center text-gray-600 hover:text-gray-900"
@@ -161,7 +161,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
         <div className="flex flex-col items-start justify-center space-x-4">
           <button
             onClick={() => navigate('/admin/owners')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
+            className="flex items-center bg-inherit font-semibold text-orange-600 hover:text-orange-900 transition-all "
           >
             <MdArrowBack className="mr-1" />
             Back to Owners
@@ -219,66 +219,74 @@ const PendingOwners = ({ searchTerm = '' }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredApplications.map((application) => (
-              <tr 
-                key={application._id}
-                className="hover:bg-gray-50"
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <MdPerson className="h-5 w-5 text-gray-400 mr-2" />
-                    <div className="text-sm font-medium text-gray-900">{application.name}</div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <MdEmail className="h-4 w-4 mr-1" />
-                      {application.email}
+            {filteredApplications.length > 0 ? (
+              filteredApplications.map((application) => (
+                <tr 
+                  key={application._id}
+                  className="hover:bg-gray-50"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <MdPerson className="h-5 w-5 text-gray-400 mr-2" />
+                      <div className="text-sm font-medium text-gray-900">{application.name}</div>
                     </div>
-                    <div className="flex items-center text-sm text-gray-900">
-                      <MdPhone className="h-4 w-4 mr-1" />
-                      {application.phone}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <MdEmail className="h-4 w-4 mr-1" />
+                        {application.email}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-900">
+                        <MdPhone className="h-4 w-4 mr-1" />
+                        {application.phone}
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <a
-                    href={application.adharCard}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-sm text-orange-600 hover:text-orange-900"
-                  >
-                    <MdBadge className="h-4 w-4 mr-1" />
-                    View Aadhar Card
-                  </a>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center text-sm text-gray-900">
-                    <MdAccessTime className="h-4 w-4 mr-1" />
-                    {new Date(application.submittedAt).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleStatusChange(application._id, 'accepted')}
-                      className="text-green-600 hover:text-green-900"
-                      title="Accept Application"
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <a
+                      href={application.adharCard}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-sm text-orange-600 hover:text-orange-900"
                     >
-                      <MdCheck className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(application._id, 'rejected')}
-                      className="text-red-600 hover:text-red-900"
-                      title="Reject Application"
-                    >
-                      <MdClose className="h-5 w-5" />
-                    </button>
-                  </div>
+                      <MdBadge className="h-4 w-4 mr-1" />
+                      View Aadhar Card
+                    </a>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-900">
+                      <MdAccessTime className="h-4 w-4 mr-1" />
+                      {new Date(application.submittedAt).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleStatusChange(application._id, 'accepted')}
+                        className="text-green-600 hover:text-green-900"
+                        title="Accept Application"
+                      >
+                        <MdCheck className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(application._id, 'rejected')}
+                        className="text-red-600 hover:text-red-900"
+                        title="Reject Application"
+                      >
+                        <MdClose className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  No pending applications found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

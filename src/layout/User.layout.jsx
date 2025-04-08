@@ -17,6 +17,8 @@ import NotFoundPage from '../pages/404';
 import LoginProtectedRoutes from '../middlewares/LoginProtectedRoutes';
 import { useAuth } from '../hooks/auth';
 import toast from 'react-hot-toast';
+import PaymentCheckout from '../pages/PaymentCheckout';
+import BookingConfirmation from '../pages/BookingConfirmation';
 
 const UserLayout = () => {
     const { userRole, userLogined } = useAuth();
@@ -50,6 +52,8 @@ const UserLayout = () => {
                     <Route element={<LoginProtectedRoutes />}>
                         <Route path='/bookings' element={<Bookingspage />} />
                         <Route path='/list-your-venue' element={<ListYourVenue />} />
+                        <Route path='/payment-checkout' element={<PaymentCheckout />} />
+                        <Route path='/booking-confirmation/:paymentIntentId' element={<BookingConfirmation />} />
                     </Route>
                     <Route path='*' element={<NotFoundPage />} />
                 </Routes>

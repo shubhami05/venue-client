@@ -329,7 +329,7 @@ function OwnerInquiries({ searchTerm = '' }) {
                   </div>
                   <div className="flex items-start space-x-2">
                     <FaCalendarAlt className="mt-1 text-orange-600" />
-                    <div>
+    <div>
                       <p className="text-sm text-gray-700"><span className="font-medium">Event:</span> {inquiry.eventType}</p>
                       <p className="text-sm text-gray-700"><span className="font-medium">Date:</span> {formatDate2(inquiry.date)}</p>
                       <p className="text-xs text-gray-500"><span className="font-medium">Received:</span> {formatDate(inquiry.createdAt)}</p>

@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/auth';
 import toast from 'react-hot-toast';
 import VenueDetailsModal from '../../components/VenueDetailsModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { getConnectAccountStatus } from '../../services/stripe.service';
 
 const OwnerVenues = ({ searchTerm }) => {
   const [venues, setVenues] = useState([]);
@@ -16,6 +17,8 @@ const OwnerVenues = ({ searchTerm }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [stripeAccountStatus, setStripeAccountStatus] = useState(null);
+  const [checkingStripe, setCheckingStripe] = useState(true);
   const itemsPerPage = 10;
   const [totalPages, setTotalPages] = useState(0);
   const [currentItems, setCurrentItems] = useState([]);
@@ -30,6 +33,24 @@ const OwnerVenues = ({ searchTerm }) => {
   });
   const [cities, setCities] = useState([]);
   const [types, setTypes] = useState([]);
+
+  // Check Stripe account status
+  useEffect(() => {
+    const checkStripeAccount = async () => {
+      try {
+        setCheckingStripe(true);
+        const response = await getConnectAccountStatus();
+        setStripeAccountStatus(response.account);
+      } catch (err) {
+        console.error('Error checking Stripe account:', err);
+        setStripeAccountStatus(null);
+      } finally {
+        setCheckingStripe(false);
+      }
+    };
+
+    checkStripeAccount();
+  }, []);
 
   // Fetch venues
   useEffect(() => {
@@ -143,8 +164,15 @@ const OwnerVenues = ({ searchTerm }) => {
     setTotalPages(Math.ceil(filteredVenues.length / itemsPerPage));
   }, [venues, debouncedSearchTerm, currentPage, filterOptions]);
 
-
-
+  // Handle add venue button click
+  const handleAddVenue = () => {
+    if (!stripeAccountStatus || !stripeAccountStatus.chargesEnabled) {
+      toast.error('You need to connect your Stripe account before adding venues');
+      navigate('/owner/profile?tab=payment');
+      return;
+    }
+    navigate('/owner/venues/new');
+  };
 
   if (isLoading) {
     return <Loader />;
@@ -166,8 +194,9 @@ const OwnerVenues = ({ searchTerm }) => {
         </h4>
         <div className="flex space-x-2">
           <button
-            onClick={() => navigate('/owner/venues/new')}
-            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center"
+            onClick={handleAddVenue}
+            disabled={!stripeAccountStatus || !stripeAccountStatus.chargesEnabled}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FaPlus className="mr-2" /> Add Venue
           </button>

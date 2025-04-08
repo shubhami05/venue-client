@@ -263,16 +263,35 @@ const VenueDetails = () => {
   const handleBookVenue = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/create`, {
         venueId,
         date: bookingForm.date,
         timeslot: parseInt(bookingForm.timeslot),
         numberOfGuest: parseInt(bookingForm.numberOfGuest)
       });
-      toast.success('Venue booked successfully!');
-      handleCloseBookingModal();
+
+      if (response.data.success) {
+        // Navigate to payment page with booking data
+        navigate('/payment-checkout', {
+          state: {
+            bookingData: {
+              bookingForm: {
+                date: bookingForm.date,
+                timeslot: bookingForm.timeslot,
+                numberOfGuest: bookingForm.numberOfGuest
+              },
+              clientSecret: response.data.clientSecret,
+              paymentIntentId: response.data.paymentIntentId,
+              amount: response.data.amount
+            }
+          }
+        });
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to book venue');
+      toast.error(error.response?.data?.message || 'Failed to initiate booking');
+    } finally {
+      setLoading(false);
     }
   };
 

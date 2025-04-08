@@ -1,8 +1,8 @@
-import { 
-  MdDashboardCustomize, 
-  MdHome, 
-  MdNoteAdd, 
-  MdQuestionAnswer, 
+import {
+  MdDashboardCustomize,
+  MdHome,
+  MdNoteAdd,
+  MdQuestionAnswer,
   MdOutlineRateReview,
   MdPerson2,
   MdOutlineMessage,
@@ -12,7 +12,8 @@ import {
   MdAnalytics,
   MdBookOnline,
   MdReviews,
-  MdEmail
+  MdEmail,
+  MdPayment
 } from "react-icons/md";
 
 export const sidebarConfig = {
@@ -66,11 +67,7 @@ export const sidebarConfig = {
         icon: MdDashboardCustomize,
         label: 'Dashboard'
       },
-      {
-        path: '/admin/owners',
-        icon: MdSupervisorAccount,
-        label: 'Owners'
-      },
+
       {
         path: '/admin/venues',
         icon: MdHome,
@@ -92,16 +89,21 @@ export const sidebarConfig = {
         label: 'Inquiries'
       },
       {
+        path: '/admin/owners',
+        icon: MdSupervisorAccount,
+        label: 'Owners'
+      },
+      {
         path: '/admin/users',
         icon: MdPeople,
         label: 'Users'
       },
-      { 
+      {
         path: '/admin/contact',
         icon: MdEmail,
         label: 'Contact'
       },
-    
+
     ],
     otherMenu: [
       {

@@ -19,6 +19,7 @@ import { useAuth } from './hooks/auth'
 
 // Import our role-based route component
 import RoleBasedRoute from './components/RoleBasedRoute'
+import StripeProvider from './components/StripeProvider'
 
 function AppContent() {
   const pathname = useLocation();
@@ -91,7 +92,9 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <StripeProvider>
+        <AppContent />
+      </StripeProvider>
     </BrowserRouter>
   )
 }

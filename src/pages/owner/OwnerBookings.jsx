@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaEye, FaUser, FaBuilding, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaUserFriends, FaFilter } from 'react-icons/fa';
+import { FaEye, FaUser, FaBuilding, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaUserFriends, FaFilter, FaMoneyBillWave } from 'react-icons/fa';
 import axios from 'axios';
 import Loader from '../../components/Loader';
 import toast from 'react-hot-toast';
@@ -122,7 +122,7 @@ function OwnerBookings({ searchTerm = '' }) {
   const fetchBookings = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/owner/bookings/fetch`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/owner/booking/fetch`);
 
       if (response.data.success) {
         setBookings(response.data.bookings);
@@ -158,7 +158,7 @@ function OwnerBookings({ searchTerm = '' }) {
 
   const handleConfirmBooking = async (bookingId) => {
     try {
-      const response = await axios.patch(`/api/owner/bookings/${bookingId}/confirm`);
+      const response = await axios.patch(`/api/owner/booking/${bookingId}/confirm`);
       
       if (response.data.success) {
         toast.success('Booking confirmed successfully!');
@@ -187,7 +187,7 @@ function OwnerBookings({ searchTerm = '' }) {
     }
     
     try {
-      const response = await axios.delete(`/api/owner/bookings/${bookingId}`);
+      const response = await axios.delete(`/api/owner/booking/${bookingId}`);
       
       if (response.data.success) {
         toast.success('Booking deleted successfully!');
@@ -335,6 +335,7 @@ function OwnerBookings({ searchTerm = '' }) {
                 <th className="px-4 py-3 text-left">Booking Date</th>
                 <th className="px-4 py-3 text-left">Time Slot</th>
                 <th className="px-4 py-3 text-left">Guests</th>
+                <th className="px-4 py-3 text-left">Amount</th>
                 <th className="px-4 py-3 text-left">Status</th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
@@ -346,8 +347,7 @@ function OwnerBookings({ searchTerm = '' }) {
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
                         <span className="font-medium">{booking.user.name}</span>
-                        <span className="text-xs text-gray-500">{booking.user.email}</span>
-                        <span className="text-xs text-gray-500">{booking.user.phone}</span>
+                       
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -359,6 +359,7 @@ function OwnerBookings({ searchTerm = '' }) {
                     <td className="px-4 py-3">{formatDateSimple(booking.date)}</td>
                     <td className="px-4 py-3">{getTimeslotText(booking.timeslot)}</td>
                     <td className="px-4 py-3">{booking.numberOfGuest}</td>
+                    <td className="px-4 py-3">₹{booking.amount}</td>
                     <td className="px-4 py-3">
                       {booking.confirmed ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -444,6 +445,7 @@ function OwnerBookings({ searchTerm = '' }) {
                       <p className="text-sm text-gray-700"><span className="font-medium">Date:</span> {formatDateSimple(booking.date)}</p>
                       <p className="text-sm text-gray-700"><span className="font-medium">Time:</span> {getTimeslotText(booking.timeslot)}</p>
                       <p className="text-sm text-gray-700"><span className="font-medium">Guests:</span> {booking.numberOfGuest}</p>
+                      <p className="text-sm text-gray-700"><span className="font-medium">Amount:</span> ₹{booking.amount}</p>
                     </div>
                   </div>
                 </div>
@@ -538,6 +540,7 @@ function OwnerBookings({ searchTerm = '' }) {
                   <p><span className="font-medium">Date:</span> {formatDateSimple(selectedBooking.date)}</p>
                   <p><span className="font-medium">Time Slot:</span> {getTimeslotText(selectedBooking.timeslot)}</p>
                   <p><span className="font-medium">Number of Guests:</span> {selectedBooking.numberOfGuest}</p>
+                  <p><span className="font-medium">Amount Paid:</span> ₹{selectedBooking.amount}</p>
                   <p><span className="font-medium">Status:</span> {selectedBooking.confirmed ? 'Confirmed' : 'Pending Confirmation'}</p>
                   <p><span className="font-medium">Booking Created:</span> {formatDate(selectedBooking.createdAt)}</p>
                 </div>

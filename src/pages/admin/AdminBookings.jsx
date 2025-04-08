@@ -229,6 +229,7 @@ const AdminBookings = ({ searchTerm = '' }) => {
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Guests</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booked On</th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
               </tr>
@@ -273,6 +274,20 @@ const AdminBookings = ({ searchTerm = '' }) => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        ₹{booking.amount?.toLocaleString() || '0'}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {booking.paymentStatus === 'completed' ? (
+                          <span className="text-green-600">Paid</span>
+                        ) : booking.paymentStatus === 'failed' ? (
+                          <span className="text-red-600">Failed</span>
+                        ) : (
+                          <span className="text-yellow-600">Pending</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-700">
                         {new Date(booking.createdAt).toLocaleDateString()}
                       </div>
@@ -296,7 +311,7 @@ const AdminBookings = ({ searchTerm = '' }) => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                     No bookings found
                   </td>
                 </tr>

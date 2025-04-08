@@ -51,8 +51,27 @@ const Bookingspage = () => {
     }
   };
 
-  const handleCancelBooking = (bookingId) => {
-    console.log(bookingId);
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/cancel/${bookingId}`
+      );
+
+      if (response.data.success) {
+        toast.success('Booking cancelled successfully');
+        // Update the bookings list by removing the cancelled booking
+        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
+      } else {
+        toast.error(response.data.message || 'Failed to cancel booking');
+      }
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast.error(error.response?.data?.message || 'Failed to cancel booking');
+    }
   };
 
   const formatDate = (dateString) => {
@@ -173,7 +192,7 @@ const Bookingspage = () => {
                         )}
                         {booking.venue.cancellation && (
                           <button
-                            onClick={handleCancelBooking(booking._id)}
+                            onClick={() => handleCancelBooking(booking._id)}
                             className='mt-2 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center'
                           >
                             Cancel Booking
