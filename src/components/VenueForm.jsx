@@ -86,7 +86,13 @@ const VenueForm = ({ onSubmit, isEditing = false, initialData = null }) => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/config`
+                    `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/config`,
+                    {
+                        withCredentials: true,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
                 );
 
                 if (response.data.success) {

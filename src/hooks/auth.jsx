@@ -29,7 +29,12 @@ export const AuthProvider = ({ children }) => {
             setLoading(true);
             lastFetchTime.current = now;
             
-            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/fetch-session`);
+            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/fetch-session`, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             if (response.data.success) {
                 setUserLogined(true);
                 setUser(response.data.userdata);
@@ -65,7 +70,12 @@ export const AuthProvider = ({ children }) => {
         
         try {
             setLoading(true);
-            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/logout`);
+            const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/logout`, {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             if (response.data.success) {
                 setUserLogined(false);
                 setUserRole("");
