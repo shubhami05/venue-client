@@ -81,10 +81,9 @@ const VenueDetails = () => {
   const fetchVenueReviews = async () => {
     try {
       setLoadingReviews(true);
-      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/venue/reviews/${venueId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/fetch/venue/${venueId}`);
       if (response.data.success) {
-        setReviews(response.data.reviews);
-        
+        setReviews(response.data.reviews);      
         // Check if user has already reviewed
         try {
           const userReviewsResponse = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/fetch`);
@@ -92,6 +91,7 @@ const VenueDetails = () => {
             const existingReview = userReviewsResponse.data.reviews.find(
               review => review.venue._id === venueId
             );
+            console.log(existingReview);
             setUserReview(existingReview || null);
           }
         } catch (error) {
@@ -272,6 +272,7 @@ const VenueDetails = () => {
       });
 
       if (response.data.success) {
+        console.log(response.data);
         // Navigate to payment page with booking data
         navigate('/payment-checkout', {
           state: {
@@ -283,7 +284,7 @@ const VenueDetails = () => {
               },
               clientSecret: response.data.clientSecret,
               paymentIntentId: response.data.paymentIntentId,
-              amount: response.data.amount
+              amount: venue.bookingPay
             }
           }
         });

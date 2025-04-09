@@ -209,74 +209,151 @@ const AdminInquiries = ({ searchTerm = '' }) => {
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr className="bg-orange-600 text-orange-50">
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Venue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Inquiry Date</th>
-               
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredInquiries.length > 0 ? (
-                filteredInquiries.map((inquiry) => (
-                  <tr 
-                    key={inquiry._id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => openMessageModal(inquiry)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{inquiry.venue?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">
-                        <div className="flex items-center">
-                          <MdLocationOn className="h-3 w-3 mr-1" />
+        <>
+          {/* Table View (Hidden on small screens) */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr className="bg-orange-600 text-orange-50">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Venue</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Inquiry Date</th>
+                 
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredInquiries.length > 0 ? (
+                  filteredInquiries.map((inquiry) => (
+                    <tr 
+                      key={inquiry._id}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => openMessageModal(inquiry)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{inquiry.venue?.name || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">
+                          <div className="flex items-center">
+                            <MdLocationOn className="h-3 w-3 mr-1" />
+                            {inquiry.venue?.city || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <MdPerson className="h-4 w-4 mr-1" />
+                          {inquiry.user?.name || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-500">{inquiry.user?.email || 'N/A'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {inquiry.eventType || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <MdCalendarToday className="h-4 w-4 mr-1" />
+                          {formatDate(inquiry.date)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-700">
+                          {formatDate(inquiry.createdAt)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(inquiry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </td>
+                     
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                      No inquiries found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Card View (Visible on small screens) */}
+          <div className="md:hidden grid grid-cols-1 gap-4">
+            {filteredInquiries.length > 0 ? (
+              filteredInquiries.map((inquiry) => (
+                <div 
+                  key={inquiry._id}
+                  onClick={() => openMessageModal(inquiry)}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                >
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{inquiry.venue?.name || 'N/A'}</h3>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MdLocationOn className="h-4 w-4 mr-1" />
                           {inquiry.venue?.city || 'N/A'}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdPerson className="h-4 w-4 mr-1" />
-                        {inquiry.user?.name || 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-500">{inquiry.user?.email || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm font-medium text-gray-900">
                         {inquiry.eventType || 'N/A'}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdCalendarToday className="h-4 w-4 mr-1" />
-                        {formatDate(inquiry.date)}
+                    </div>
+                    
+                    <div className="border-t border-gray-200 pt-3 mt-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdPerson className="h-4 w-4 mr-1" />
+                            <span className="font-medium">User:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{inquiry.user?.name || 'N/A'}</div>
+                          <div className="text-xs text-gray-500 ml-5">{inquiry.user?.email || 'N/A'}</div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdCalendarToday className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Event Date:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{formatDate(inquiry.date)}</div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdAccessTime className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Inquiry Date:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{formatDate(inquiry.createdAt)}</div>
+                          <div className="text-xs text-gray-500 ml-5">
+                            {new Date(inquiry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdMessage className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Message:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5 truncate">
+                            {inquiry.message || 'No message'}
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700">
-                        {formatDate(inquiry.createdAt)}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(inquiry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </td>
-                   
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    No inquiries found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No inquiries found
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* Message Modal */}

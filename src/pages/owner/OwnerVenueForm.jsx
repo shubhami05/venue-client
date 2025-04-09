@@ -17,11 +17,10 @@ const OwnerVenueForm = () => {
                     `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/config`
                 );
 
-                console.log('API Response:', response.data);
+             
 
                 if (response.data.success) {
                     const config = response.data.config;
-                    console.log('Config data received:', config);
                     
                     // Check if cities array exists and is valid
                     if (!config.cities || !Array.isArray(config.cities)) {

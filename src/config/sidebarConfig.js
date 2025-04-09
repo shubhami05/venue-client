@@ -31,6 +31,11 @@ export const sidebarConfig = {
         label: 'My Venues'
       },
       {
+        path: '/owner/reserve-venue',
+        icon: MdBookOnline,
+        label: 'Reserve Venue'
+      },
+      {
         path: '/owner/bookings',
         icon: MdNoteAdd,
         label: 'Bookings'

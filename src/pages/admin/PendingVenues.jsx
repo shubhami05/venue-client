@@ -259,7 +259,8 @@ const PendingVenues = ({ searchTerm = '' }) => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table View (Hidden on small screens) */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
           <tr className="bg-orange-600 text-orange-50">
@@ -337,6 +338,78 @@ const PendingVenues = ({ searchTerm = '' }) => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Card View (Visible on small screens) */}
+      <div className="md:hidden grid grid-cols-1 gap-4">
+        {filteredVenues.map((venue) => (
+          <div 
+            key={venue._id}
+            onClick={() => handleRowClick(venue._id)}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+          >
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{venue.name}</h3>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <MdPerson className="h-4 w-4 mr-1" />
+                    {venue.owner.name || 'N/A'}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-900">
+                  ₹{venue.bookingPay || 'N/A'}
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-3 mt-3">
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <div className="flex items-center text-sm text-gray-700 mb-1">
+                      <MdLocationOn className="h-4 w-4 mr-1" />
+                      <span className="font-medium">Location:</span>
+                    </div>
+                    <div className="text-sm text-gray-900 ml-5">{venue.address || 'N/A'}</div>
+                    <div className="text-sm text-gray-700 ml-5">{venue.city || 'N/A'}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center text-sm text-gray-700 mb-1">
+                      <MdAccessTime className="h-4 w-4 mr-1" />
+                      <span className="font-medium">Submitted:</span>
+                    </div>
+                    <div className="text-sm text-gray-900 ml-5">
+                      {new Date(venue.submittedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4 flex justify-end space-x-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(venue._id, 'accepted');
+                  }}
+                  className="text-green-600 hover:text-green-900 bg-green-50 p-2 rounded-full"
+                  title="Accept Venue"
+                >
+                  <MdCheck className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(venue._id, 'rejected');
+                  }}
+                  className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
+                  title="Reject Venue"
+                >
+                  <MdClose className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Venue Details Modal */}

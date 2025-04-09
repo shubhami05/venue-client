@@ -22,6 +22,7 @@ const BookingConfirmation = () => {
           setStatus('success');
           setBooking(response.data.booking);
           toast.success('Payment successful! Your booking is confirmed.');
+          navigate('/bookings');
         } else {
           setStatus('error');
           toast.error(response.data.message || 'Payment failed');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdEdit, MdDelete, MdBlock, MdLocationOn, MdPhone, MdPending } from 'react-icons/md';
+import { MdEdit, MdDelete, MdBlock, MdLocationOn, MdPhone, MdPending, MdAccessTime, MdEmail } from 'react-icons/md';
 import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -174,7 +174,8 @@ const AdminOwners = ({ searchTerm }) => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table View - Hidden on small screens */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr className="bg-orange-600 text-orange-50">
@@ -241,6 +242,50 @@ const AdminOwners = ({ searchTerm }) => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Card View - Visible only on small screens */}
+      <div className="md:hidden">
+        {filteredOwners.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredOwners.map((owner) => (
+              <div 
+                key={owner._id}
+                className="bg-white rounded-lg shadow p-4"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="text-sm font-medium text-gray-900">{owner.fullname}</div>
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    Owner
+                  </span>
+                </div>
+                
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdEmail className="h-4 w-4 mr-1" />
+                    {owner.email || 'N/A'}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdPhone className="h-4 w-4 mr-1" />
+                    {owner.mobile || 'N/A'}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdLocationOn className="h-4 w-4 mr-1" />
+                    Venues: {owner.venueCount || 0}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <MdAccessTime className="h-4 w-4 mr-1" />
+                    Joined: {owner.joinedDate}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
+            No owners found
+          </div>
+        )}
       </div>
     </div>
   );

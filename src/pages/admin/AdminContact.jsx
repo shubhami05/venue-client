@@ -202,7 +202,8 @@ const AdminContact = ({ searchTerm = '' }) => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table View (Hidden on small screens) */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
             <tr className="bg-orange-600 text-orange-50">
@@ -280,6 +281,88 @@ const AdminContact = ({ searchTerm = '' }) => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Card View (Visible on small screens) */}
+      <div className="md:hidden grid grid-cols-1 gap-4">
+        {filteredContacts.length > 0 ? (
+          filteredContacts.map((contact) => (
+            <div 
+              key={contact._id}
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+            >
+              <div className="p-4">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{contact.fullname}</h3>
+                    {contact.user && (
+                      <div className="text-xs text-gray-500">
+                        Registered User
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatDate(contact.createdAt)}
+                  </div>
+                </div>
+                
+                <div className="border-t border-gray-200 pt-3 mt-3">
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <div className="flex items-center text-sm text-gray-700 mb-1">
+                        <MdEmail className="h-4 w-4 mr-1 text-orange-600" />
+                        <span className="font-medium">Email:</span>
+                      </div>
+                      <div className="text-sm text-gray-900 ml-5">{contact.email}</div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center text-sm text-gray-700 mb-1">
+                        <MdPhone className="h-4 w-4 mr-1 text-orange-600" />
+                        <span className="font-medium">Phone:</span>
+                      </div>
+                      <div className="text-sm text-gray-900 ml-5">{contact.mobile}</div>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center text-sm text-gray-700 mb-1">
+                        <MdMessage className="h-4 w-4 mr-1 text-orange-600" />
+                        <span className="font-medium">Message:</span>
+                      </div>
+                      <div className="text-sm text-gray-900 ml-5">
+                        {contact.message.length > 100 
+                          ? `${contact.message.substring(0, 100)}...` 
+                          : contact.message}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex justify-end space-x-2">
+                  <button
+                    onClick={() => handleEmailReply(contact)}
+                    className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full"
+                    title="Reply via Email"
+                    disabled={processingEmail}
+                  >
+                    <MdReply className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteContact(contact._id)}
+                    className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
+                    title="Delete Contact"
+                  >
+                    <MdDelete className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No contacts found
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdEdit, MdDelete, MdBlock, MdStar, MdLocationOn, MdPerson, MdPending, MdViewCozy, MdHideImage, MdMail, MdPhone } from 'react-icons/md';
+import { MdEdit, MdDelete, MdBlock, MdStar, MdLocationOn, MdPerson, MdPending, MdViewCozy, MdHideImage, MdMail, MdPhone, MdEvent } from 'react-icons/md';
 import { FaFilter, FaStar } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -196,7 +196,7 @@ const AdminVenues = ({ searchTerm }) => {
               <div>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                  className="flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
                 >
                   <FaFilter />
                   <span>Filters</span>
@@ -236,88 +236,179 @@ const AdminVenues = ({ searchTerm }) => {
             )}
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
-                <tr className="bg-orange-600 text-orange-50">
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rating</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredVenues.map((venue) => (
-                  <tr 
-                    key={venue._id}
-                    onClick={() => handleRowClick(venue._id)}
-                    className="cursor-pointer hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{venue.name}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdPerson className="h-4 w-4 mr-1" />
-                        {venue.owner?.name || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-1">
+          {/* Table View (Hidden on small screens) */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr className="bg-orange-600 text-orange-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rating</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredVenues.map((venue) => (
+                    <tr 
+                      key={venue._id}
+                      onClick={() => handleRowClick(venue._id)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{venue.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
-                          <MdLocationOn className="h-4 w-4 mr-1" />
-                          {venue.city || 'N/A'}
+                          <MdPerson className="h-4 w-4 mr-1" />
+                          {venue.owner?.name || 'N/A'}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdLocationOn className="h-4 w-4 mr-1" />
+                            {venue.city || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdMail className="h-4 w-4 mr-1" />
+                            {venue.owner?.email || 'N/A'}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdPhone className="h-4 w-4 mr-1" />
+                            {venue.owner?.phone || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {venue.rating ? (
+                          <div className="flex items-center">
+                            {renderStars(venue.rating)}
+                            <span className="ml-1 text-sm text-gray-700">({venue.rating.toFixed(1)})</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-500">No ratings</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          ₹{venue.withoutFoodRent?.fullday || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleStatus(venue._id);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Remove Venue"
+                          >
+                            <MdHideImage className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Card View (Visible on small screens) */}
+          <div className="md:hidden grid grid-cols-1 gap-4">
+            {filteredVenues.map((venue) => (
+              <div 
+                key={venue._id}
+                onClick={() => handleRowClick(venue._id)}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              >
+                <div className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{venue.name}</h3>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <MdLocationOn className="h-4 w-4 mr-1" />
+                        {venue.city || 'N/A'}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-1">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <MdMail className="h-4 w-4 mr-1" />
-                          {venue.owner?.email || 'N/A'}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-900">
-                          <MdPhone className="h-4 w-4 mr-1" />
-                          {venue.owner?.phone || 'N/A'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {venue.rating ? (
-                        <div className="flex items-center">
-                          {renderStars(venue.rating)}
-                          <span className="ml-1 text-sm text-gray-700">({venue.rating.toFixed(1)})</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500">No ratings</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <div className="text-sm font-medium text-gray-900">
                         ₹{venue.withoutFoodRent?.fullday || 'N/A'}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleToggleStatus(venue._id);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                          title="Remove Venue"
-                        >
-                          <MdHideImage className="h-5 w-5" />
-                        </button>
+                      <div className="text-xs text-gray-500">Full Day Rate</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                          <MdPerson className="h-4 w-4 mr-1" />
+                          <span className="font-medium">Owner:</span>
+                        </div>
+                        <div className="text-sm text-gray-900 ml-5">{venue.owner?.name || 'N/A'}</div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      
+                      <div>
+                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                          <MdMail className="h-4 w-4 mr-1" />
+                          <span className="font-medium">Email:</span>
+                        </div>
+                        <div className="text-sm text-gray-900 ml-5">{venue.owner?.email || 'N/A'}</div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                          <MdPhone className="h-4 w-4 mr-1" />
+                          <span className="font-medium">Phone:</span>
+                        </div>
+                        <div className="text-sm text-gray-900 ml-5">{venue.owner?.phone || 'N/A'}</div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                          <MdStar className="h-4 w-4 mr-1" />
+                          <span className="font-medium">Rating:</span>
+                        </div>
+                        <div className="ml-5">
+                          {venue.rating ? (
+                            <div className="flex items-center">
+                              {renderStars(venue.rating)}
+                              <span className="ml-1 text-sm text-gray-700">({venue.rating.toFixed(1)})</span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-500">No ratings</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleStatus(venue._id);
+                      }}
+                      className="text-red-600 hover:text-red-900 flex items-center"
+                      title="Remove Venue"
+                    >
+                      <MdHideImage className="h-5 w-5 mr-1" />
+                      <span className="text-sm">Remove</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </>
       )}

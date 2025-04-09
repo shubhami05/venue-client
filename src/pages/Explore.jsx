@@ -18,7 +18,6 @@ const Explorepage = () => {
   const [eventType, setEventType] = useState('')
   const [foodOption, setFoodOption] = useState('')
   const [decorationOption, setDecorationOption] = useState('')
-  const [cancellation, setCancellation] = useState('')
   const filterRef = useRef(null)
   const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 960)
   const location = useLocation()
@@ -27,12 +26,16 @@ const Explorepage = () => {
   const [hasMore, setHasMore] = useState(true)
   const [scrollTopVisible, setScrollTopVisible] = useState(false)
 
-  const venueTypes = [
-    { value: 'banquet', label: 'Banquet' },
-    { value: 'conference', label: 'Conference' },
-    { value: 'wedding', label: 'Wedding' },
-    { value: 'party', label: 'Party' }
-  ]
+  // State for filter options
+  const [filterOptions, setFilterOptions] = useState({
+    cities: [],
+    venueTypes: [],
+    eventTypes: [],
+    foodOptions: [true,false],
+    decorationOptions: []
+  })
+
+
 
   useEffect(() => {
     AOS.init({ duration: 1000 })
@@ -47,6 +50,19 @@ const Explorepage = () => {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Extract unique filter options from venues
+  useEffect(() => {
+    if (allVenues.length > 0) {
+      const options = {
+        cities: [...new Set(allVenues.map(venue => venue.city))].filter(Boolean),
+        venueTypes: [...new Set(allVenues.map(venue => venue.type))].filter(Boolean),
+        eventTypes: [...new Set(allVenues.flatMap(venue => venue.events || []))].filter(Boolean),
+        decorationOptions: [...new Set(allVenues.map(venue => venue.decoration?.type).filter(Boolean))]
+      }
+      setFilterOptions(options)
+    }
+  }, [allVenues])
 
   // Close filter menu on route changes
   useEffect(() => {
@@ -134,10 +150,9 @@ const Explorepage = () => {
 
     // Filter venues based on current filter criteria
     const filtered = allVenues.filter(venue => {
-      // Parking facility filter
-      const matchesParking = parkingFacility === '' ||
-        (parkingFacility === 'yes' && venue.parking?.available) ||
-        (parkingFacility === 'no' && !venue.parking?.available)
+      // Food facility filter
+      const matchesFood = foodOption === '' || 
+        (foodOption === 'true' ? venue.food?.providedByVenue : !venue.food?.providedByVenue)
 
       // City filter
       const matchesCity = city === '' || venue.city.toLowerCase() === city.toLowerCase()
@@ -148,22 +163,16 @@ const Explorepage = () => {
       // Event type filter
       const matchesEvent = eventType === '' || venue.events?.includes(eventType)
 
-      // Cancellation filter
-      const matchesCancellation = cancellation === '' ||
-        (cancellation === 'yes' && venue.cancellation) ||
-        (cancellation === 'no' && !venue.cancellation)
-
       // Search term filter
       const matchesSearch = searchTerm === '' ||
         venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         venue.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
         venue.description.toLowerCase().includes(searchTerm.toLowerCase())
 
-      return matchesParking &&
+      return matchesFood &&
         matchesCity &&
         matchesType &&
         matchesEvent &&
-        matchesCancellation &&
         matchesSearch
     })
 
@@ -183,7 +192,7 @@ const Explorepage = () => {
     setCity('')
     setVenueType('')
     setEventType('')
-    setCancellation('')
+    setFoodOption('')
 
     // Reset to all venues
     setFilteredVenues(allVenues)
@@ -282,9 +291,9 @@ const Explorepage = () => {
                   onChange={(e) => setVenueType(e.target.value)}
                 >
                   <option value='' className="bg-gray-800 text-gray-100">All Types</option>
-                  {venueTypes.map((type) => (
-                    <option key={type.value} value={type.value} className="bg-gray-800 text-gray-100">
-                      {type.label}
+                  {filterOptions.venueTypes.map((type) => (
+                    <option key={type} value={type} className="bg-gray-800 text-gray-100">
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -297,34 +306,23 @@ const Explorepage = () => {
                   onChange={(e) => setEventType(e.target.value)}
                 >
                   <option value='' className="bg-gray-800 text-gray-100">All Events</option>
-                  <option value='wedding' className="bg-gray-800 text-gray-100">Wedding</option>
-                  <option value='corporate' className="bg-gray-800 text-gray-100">Corporate</option>
-                  <option value='birthday' className="bg-gray-800 text-gray-100">Birthday</option>
-                  <option value='conference' className="bg-gray-800 text-gray-100">Conference</option>
+                  {filterOptions.eventTypes.map((type) => (
+                    <option key={type} value={type} className="bg-gray-800 text-gray-100">
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className='w-full'>
-                <label className='block text-sm font-medium mb-1'>Cancellation Policy:</label>
+                <label className='block text-sm font-medium mb-1'>Food Catering provided?:</label>
                 <select
                   className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
-                  value={cancellation}
-                  onChange={(e) => setCancellation(e.target.value)}
-                >
-                  <option value='' className="bg-gray-800 text-gray-100">All Options</option>
-                  <option value='yes' className="bg-gray-800 text-gray-100">Cancellation Available</option>
-                  <option value='no' className="bg-gray-800 text-gray-100">No Cancellation</option>
-                </select>
-              </div>
-              <div className='w-full'>
-                <label className='block text-sm font-medium mb-1'>Food Catering Required?:</label>
-                <select
-                  className='block w-full p-2 text-sm rounded-lg border bg-gray-800 border-gray-600 focus:ring-orange-500 focus:border-orange-500 text-gray-100'
-                  value={parkingFacility}
-                  onChange={(e) => setParkingFacility(e.target.value)}
+                  value={foodOption}
+                  onChange={(e) => setFoodOption(e.target.value)}
                 >
                   <option value='' className="bg-gray-800 text-gray-100">Not selected</option>
-                  <option value='yes' className="bg-gray-800 text-gray-100">Yes</option>
-                  <option value='no' className="bg-gray-800 text-gray-100">No</option>
+                  <option value='true' className="bg-gray-800 text-gray-100">Yes</option>
+                  <option value='false' className="bg-gray-800 text-gray-100">No</option>
                 </select>
               </div>
               <div className='w-full'>
@@ -335,8 +333,11 @@ const Explorepage = () => {
                   onChange={(e) => setCity(e.target.value)}
                 >
                   <option value='' className="bg-gray-800 text-gray-100">Select City</option>
-                  <option value='Surat' className="bg-gray-800 text-gray-100">Surat</option>
-                  <option value='Ahemdabad' className="bg-gray-800 text-gray-100">Ahemdabad</option>
+                  {filterOptions.cities.map((city) => (
+                    <option key={city} value={city} className="bg-gray-800 text-gray-100">
+                      {city}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className='flex justify-between w-full pt-3'>
@@ -358,7 +359,7 @@ const Explorepage = () => {
           <div className={`w-full lg:flex-1 transition-all duration-500 ease-in-out ${isFilterOpen && isSmallDevice ? 'hidden' : 'block'}`}>
             <div className='sm:p-5 p-0 grid grid-cols-1 xl:grid-cols-2 lg:grid-cols-2 md:grid-cols-2 font-medium gap-5 place-items-center' data-aos="fade-up">
               {filteredVenues.length > 0 ? filteredVenues.map((venue, index) => (
-                <div className="w-full flex justify-center">
+               
                   <VenueCard
                     key={venue._id || index}
                     name={venue.name}
@@ -369,7 +370,6 @@ const Explorepage = () => {
                     id={venue._id}
                     bookingPay={venue.bookingPay}
                   />
-                </div>
               )) : (
                 <div className="col-span-full flex justify-center items-center pt-16">
                   <p className='text-white text-xl'>No any Venue Available</p>

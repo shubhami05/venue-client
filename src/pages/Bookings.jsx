@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck, MdSearchOff } from 'react-icons/md';
+import { MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck, MdSearchOff, MdClose, MdCancel } from 'react-icons/md';
 import { FaBuilding, FaExclamationTriangle } from 'react-icons/fa';
 import axios from 'axios';
 import Loader from '../components/Loader';
@@ -14,6 +14,8 @@ const Bookingspage = () => {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     // Fetch user bookings when component mounts
@@ -31,12 +33,10 @@ const Bookingspage = () => {
         setBookings(response.data.bookings);
       } else {
         setError(response.data.message);
-        // toast.error(response.data.message || 'Failed to fetch bookings');
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
       setError(error.response?.data?.message || 'Failed to fetch bookings');
-      // toast.error(error.response?.data?.message || 'Failed to fetch bookings');
     } finally {
       setIsLoading(false);
     }
@@ -51,20 +51,29 @@ const Bookingspage = () => {
     }
   };
 
-  const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
-      return;
-    }
+  const openCancelModal = (booking) => {
+    setSelectedBooking(booking);
+    setShowCancelModal(true);
+  };
+
+  const closeCancelModal = () => {
+    setSelectedBooking(null);
+    setShowCancelModal(false);
+  };
+
+  const handleCancelBooking = async () => {
+    if (!selectedBooking) return;
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/cancel/${bookingId}`
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/cancel/${selectedBooking._id}`
       );
 
       if (response.data.success) {
         toast.success('Booking cancelled successfully');
         // Update the bookings list by removing the cancelled booking
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
+        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== selectedBooking._id));
+        closeCancelModal();
       } else {
         toast.error(response.data.message || 'Failed to cancel booking');
       }
@@ -79,7 +88,6 @@ const Bookingspage = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-
   if (isLoading) {
     return <Loader />;
   }
@@ -87,10 +95,8 @@ const Bookingspage = () => {
   return (
     <div className='min-h-screen bg-gradient-to-b from-orange-100 to-orange-50 pt-8 pb-16' style={{ paddingTop: '80px' }}>
       <div className='container mx-auto px-4'>
-
-
         {error ? (
-          <div className='flex flex-col items-center justify-center  rounded-lg  p-8 text-center'>
+          <div className='flex flex-col items-center justify-center rounded-lg p-8 text-center'>
             <FaExclamationTriangle className="w-24 h-24 text-red-500 mb-4" />
             <h2 className='text-2xl font-semibold text-red-600 mb-2'>Oops! Something went wrong</h2>
             <p className='text-gray-600 mb-6 max-w-md mx-auto'>{error || "We couldn't load your bookings. Please try again later."}</p>
@@ -180,19 +186,20 @@ const Bookingspage = () => {
                           <p className='text-gray-700 text-sm'>{new Date(booking.createdAt).toLocaleDateString()}</p>
                         </div>
 
-                        {booking.confirmed ? (
-                          <span className='px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800'>
-                            <MdCheck className='h-4 w-4 mr-1' />
-                            Confirmed
+                        {booking.isCancelled ? (
+                          <span className='px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800'>
+                            <MdClose className='h-5 w-5 mr-1' />
+                            Cancelled
                           </span>
                         ) : (
-                          <span className='px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800'>
-                            Pending
+                          <span className='px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800'>
+                            <MdCheck className='h-5 w-5 mr-1' />
+                            Confirmed
                           </span>
                         )}
-                        {booking.venue.cancellation && (
+                        {booking.venue.cancellation && !booking.isCancelled && (
                           <button
-                            onClick={() => handleCancelBooking(booking._id)}
+                            onClick={() => openCancelModal(booking)}
                             className='mt-2 text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center'
                           >
                             Cancel Booking
@@ -216,6 +223,41 @@ const Bookingspage = () => {
           </div>
         )}
       </div>
+
+      {/* Cancel Booking Confirmation Modal */}
+      {showCancelModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="text-center">
+              <FaExclamationTriangle className="mx-auto h-12 w-12 text-orange-500 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Cancel Booking Confirmation</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Are you sure you want to cancel your booking for <span className="font-semibold">{selectedBooking.venue.name}</span> on {formatDate(selectedBooking.date)}?
+              </p>
+              <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-left">
+                <p className="text-sm text-red-700 font-medium">Important Notice:</p>
+                <p className="text-sm text-red-600">
+                  Please note that cancellation is non-refundable. The booking amount will not be returned.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end space-x-3">
+              <button
+                onClick={closeCancelModal}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                Keep Booking
+              </button>
+              <button
+                onClick={handleCancelBooking}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              >
+                Yes, Cancel Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { MdEdit, MdDelete, MdBlock, MdPhone, MdLocationOn } from 'react-icons/md';
+import { MdPerson, MdEmail, MdPhone, MdAccessTime, MdDelete } from 'react-icons/md';
 import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
-const AdminUsers = ({ searchTerm }) => {
+const AdminUsers = ({ searchTerm = '' }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
-    joinDate: 'all'
+    registrationDate: 'all',
+    role: 'all'
+  });
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+    onConfirm: () => {}
   });
 
   useEffect(() => {
@@ -26,95 +35,86 @@ const AdminUsers = ({ searchTerm }) => {
       );
 
       if (response.data.success) {
-        // Filter only users with role 'user'
-        const userRoleUsers = response.data.users.filter(user => user.role === 'user');
-        setUsers(userRoleUsers);
-        console.log(userRoleUsers);
+        setUsers(response.data.users);
       } else {
         setError(response.data.message);
-        toast.error(response.data.message);
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching users:', error);
       setError(error.response?.data?.message || 'Failed to fetch users');
-      toast.error(error.response?.data?.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeleteUser = (userId) => {
+    toast.error('User data cannot be deleted!');
+  };
+
+  // Apply filters to users
   const filteredUsers = users.filter(user => {
-    const searchTermLower = searchTerm.toLowerCase();
-    const matchesSearchTerm = (
-      (user.name || '').toLowerCase().includes(searchTermLower) ||
-      (user.email || '').toLowerCase().includes(searchTermLower) ||
-      (user.phone || '').toString().includes(searchTermLower) ||
-      (user.location || '').toLowerCase().includes(searchTermLower)
-    );
+    // Search term filter
+    if (searchTerm) {
+      const searchTermLower = searchTerm.toLowerCase();
+      const matchesSearchTerm = (
+        (user.name || '').toLowerCase().includes(searchTermLower) ||
+        (user.email || '').toLowerCase().includes(searchTermLower) ||
+        (user.phone || '').toLowerCase().includes(searchTermLower)
+      );
+      
+      if (!matchesSearchTerm) return false;
+    }
     
-    // Apply join date filter if selected
-    let matchesJoinDate = true;
-    if (filterOptions.joinDate !== 'all') {
-      const joinDate = new Date(user.joinedDate);
+    // Registration date filter
+    if (filterOptions.registrationDate !== 'all') {
+      const registrationDate = new Date(user.joinedDate);
       const now = new Date();
-      const oneMonthAgo = new Date(now);
-      oneMonthAgo.setMonth(now.getMonth() - 1);
+      const today = new Date(now.setHours(0, 0, 0, 0));
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
       
-      const threeMonthsAgo = new Date(now);
-      threeMonthsAgo.setMonth(now.getMonth() - 3);
+      const lastWeek = new Date(today);
+      lastWeek.setDate(lastWeek.getDate() - 7);
       
-      const sixMonthsAgo = new Date(now);
-      sixMonthsAgo.setMonth(now.getMonth() - 6);
+      const lastMonth = new Date(today);
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
       
-      switch (filterOptions.joinDate) {
+      let matchesRegistrationDate = false;
+      
+      switch (filterOptions.registrationDate) {
+        case 'today':
+          matchesRegistrationDate = registrationDate.toDateString() === today.toDateString();
+          break;
+        case 'yesterday':
+          matchesRegistrationDate = registrationDate.toDateString() === yesterday.toDateString();
+          break;
+        case 'lastWeek':
+          matchesRegistrationDate = registrationDate >= lastWeek && registrationDate <= today;
+          break;
         case 'lastMonth':
-          matchesJoinDate = joinDate >= oneMonthAgo;
-          break;
-        case 'last3Months':
-          matchesJoinDate = joinDate >= threeMonthsAgo;
-          break;
-        case 'last6Months':
-          matchesJoinDate = joinDate >= sixMonthsAgo;
+          matchesRegistrationDate = registrationDate >= lastMonth && registrationDate <= today;
           break;
         default:
-          matchesJoinDate = true;
+          matchesRegistrationDate = true;
+      }
+      
+      if (!matchesRegistrationDate) return false;
+    }
+    
+    // Role filter
+    if (filterOptions.role !== 'all') {
+      if (user.role.toLowerCase() !== filterOptions.role.toLowerCase()) {
+        return false;
       }
     }
     
-    return matchesSearchTerm && matchesJoinDate;
+    return true;
   });
-
-  const handleEdit = (userId) => {
-    // Implement edit functionality
-    console.log('Edit user:', userId);
-  };
-
-  const handleDelete = (userId) => {
-    // Implement delete functionality
-    console.log('Delete user:', userId);
-  };
-
-  // const handleToggleStatus = async (userId) => {
-  //   try {
-  //     const response = await axios.put(
-  //       `${import.meta.env.VITE_API_BACKEND_URI}/api/admin/user/toggle-status/${userId}`
-  //     );
-
-  //     if (response.data.success) {
-  //       toast.success(response.data.message);
-  //       fetchUsers(); // Refresh the users list
-  //     } else {
-  //       toast.error(response.data.message);
-  //     }
-  //   } catch (error) {
-  //     toast.error(error.response?.data?.message || 'Failed to toggle user status');
-  //   }
-  // };
 
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
-        <Loader />
+        <Loader/>
       </div>
     );
   }
@@ -130,110 +130,197 @@ const AdminUsers = ({ searchTerm }) => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">User Management</h1>
+        <h1 className="text-2xl font-bold">Users</h1>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h5 className="text-lg font-semibold text-gray-900">
-            {filteredUsers.length} {filteredUsers.length === 1 ? 'User' : 'Users'} Found
-          </h5>
-          <div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
-            >
-              <FaFilter />
-              <span>Filters</span>
-            </button>
-          </div>
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+          >
+            <FaFilter />
+            <span>Filters</span>
+          </button>
         </div>
 
         {showFilters && (
-          <div className="mt-4">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Join Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
-                value={filterOptions.joinDate}
-                onChange={(e) => setFilterOptions({...filterOptions, joinDate: e.target.value})}
+                value={filterOptions.registrationDate}
+                onChange={(e) => setFilterOptions({...filterOptions, registrationDate: e.target.value})}
               >
                 <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="lastWeek">Last Week</option>
                 <option value="lastMonth">Last Month</option>
-                <option value="last3Months">Last 3 Months</option>
-                <option value="last6Months">Last 6 Months</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.role}
+                onChange={(e) => setFilterOptions({...filterOptions, role: e.target.value})}
+              >
+                <option value="all">All Roles</option>
+                <option value="user">User</option>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
           </div>
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      {/* Table View - Hidden on small screens */}
+      <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
-          <thead className="bg-gray-50">
+          <thead>
             <tr className="bg-orange-600 text-orange-50">
-              <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">Contact</th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Joined Date</th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider">Actions</th> */}
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Registration Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Role</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
-              <tr key={user._id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.email || 'N/A'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex flex-col space-y-1">
-                    <div className="flex items-center text-sm text-gray-900">
-                      <MdPhone className="h-4 w-4 mr-1" />
-                      {user.phone || 'N/A'}
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <tr 
+                  key={user._id}
+                  className="hover:bg-gray-50"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <MdPerson className="h-5 w-5 text-gray-400 mr-2" />
+                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
                     </div>
-
-                  </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <MdEmail className="h-4 w-4 mr-1" />
+                        {user.email}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-900">
+                        <MdPhone className="h-4 w-4 mr-1" />
+                        {user.phone}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-900">
+                      <MdAccessTime className="h-4 w-4 mr-1" />
+                      {new Date(user.joinedDate).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                      ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 
+                        user.role === 'owner' ? 'bg-blue-100 text-blue-800' : 
+                        'bg-green-100 text-green-800'}`}>
+                      {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleDeleteUser(user._id)}
+                        className="text-red-600 hover:text-red-900"
+                        title="Delete User"
+                      >
+                        <MdDelete className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                  No users found
                 </td>
-               
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.joinedDate}
-                </td>
-                {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(user._id)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                      title="Edit User"
-                    >
-                      <MdEdit className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleToggleStatus(user._id)}
-                      className="text-yellow-600 hover:text-yellow-900"
-                      title={`${user.status === 'active' ? 'Block' : 'Activate'} User`}
-                    >
-                      <MdBlock className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user._id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Delete User"
-                    >
-                      <MdDelete className="h-5 w-5" />
-                    </button>
-                  </div>
-                </td> */}
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Card View - Visible only on small screens */}
+      <div className="md:hidden">
+        {filteredUsers.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredUsers.map((user) => (
+              <div 
+                key={user._id}
+                className="bg-white rounded-lg shadow p-4"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center">
+                    <MdPerson className="h-5 w-5 text-gray-400 mr-2" />
+                    <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                  </div>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full 
+                    ${user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 
+                      user.role === 'owner' ? 'bg-blue-100 text-blue-800' : 
+                      'bg-green-100 text-green-800'}`}>
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </span>
+                </div>
+                
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdEmail className="h-4 w-4 mr-1" />
+                    {user.email}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdPhone className="h-4 w-4 mr-1" />
+                    {user.phone}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-900">
+                    <MdAccessTime className="h-4 w-4 mr-1" />
+                    {new Date(user.joinedDate).toLocaleDateString()}
+                  </div>
+                </div>
+                
+                <div className="flex justify-end pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleDeleteUser(user._id)}
+                    className="flex items-center text-red-600 hover:text-red-900"
+                    title="Delete User"
+                  >
+                    <MdDelete className="h-5 w-5 mr-1" />
+                    <span className="text-sm">Delete</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-4 text-center text-gray-500">
+            No users found
+          </div>
+        )}
+      </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+      />
     </div>
   );
 };
 
-export default AdminUsers; 
+export default AdminUsers;

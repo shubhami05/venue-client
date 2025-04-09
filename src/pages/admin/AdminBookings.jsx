@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdPerson, MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck } from 'react-icons/md';
+import { MdPerson, MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck, MdPayment, MdClose } from 'react-icons/md';
 import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -140,6 +140,35 @@ const AdminBookings = ({ searchTerm = '' }) => {
     }
   };
 
+  const getPaymentStatusBadge = (status) => {
+    switch (status) {
+      case 'completed':
+        return <span className="text-green-600">Paid</span>;
+      case 'failed':
+        return <span className="text-red-600">Failed</span>;
+      default:
+        return <span className="text-yellow-600">Pending</span>;
+    }
+  };
+
+  const getBookingStatusBadge = (cancelled) => {
+    if (!cancelled) {
+      return (
+        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+          <MdCheck className="h-5 w-5 mr-1" />
+          Confirmed
+        </span>
+      );
+    } else {
+      return (
+        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+          <MdClose className="h-5 w-5 mr-1" />
+          Cancelled
+        </span>
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
@@ -163,7 +192,7 @@ const AdminBookings = ({ searchTerm = '' }) => {
           <div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="w-full md:w-auto flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
             >
               <FaFilter />
               <span>Filters</span>
@@ -221,104 +250,178 @@ const AdminBookings = ({ searchTerm = '' }) => {
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full">
-            <thead className="bg-gray-50">
-              <tr className="bg-orange-600 text-orange-50">
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Venue</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Guests</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booked On</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredBookings.length > 0 ? (
-                filteredBookings.map((booking) => (
-                  <tr 
-                    key={booking._id}
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{booking.venue?.name || 'N/A'}</div>
-                      <div className="text-xs text-gray-500">
-                        <div className="flex items-center">
-                          <MdLocationOn className="h-3 w-3 mr-1" />
+        <>
+          {/* Table View (Hidden on small screens) */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr className="bg-orange-600 text-orange-50">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Venue</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Event Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Guests</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booked On</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredBookings.length > 0 ? (
+                    filteredBookings.map((booking) => (
+                      <tr 
+                        key={booking._id}
+                        className="hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{booking.venue?.name || 'N/A'}</div>
+                          <div className="text-xs text-gray-500">
+                            <div className="flex items-center">
+                              <MdLocationOn className="h-3 w-3 mr-1" />
+                              {booking.venue?.city || 'N/A'}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdPerson className="h-4 w-4 mr-1" />
+                            {booking.user?.name || 'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-500">{booking.user?.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdCalendarToday className="h-4 w-4 mr-1" />
+                            {new Date(booking.date).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <MdAccessTime className="h-3 w-3 mr-1" />
+                            {getTimeslotLabel(booking.timeslot)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <MdPeopleAlt className="h-4 w-4 mr-1" />
+                            {booking.numberOfGuest}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            ₹{booking.amount?.toLocaleString() || '0'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            <div className="flex items-center">
+                              <MdPayment className="h-3 w-3 mr-1" />
+                              {getPaymentStatusBadge(booking.paymentStatus)}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-700">
+                            {new Date(booking.createdAt).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getBookingStatusBadge(booking.isCancelled)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                        No bookings found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Card View (Visible on small screens) */}
+          <div className="md:hidden grid grid-cols-1 gap-4">
+            {filteredBookings.length > 0 ? (
+              filteredBookings.map((booking) => (
+                <div 
+                  key={booking._id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                >
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">{booking.venue?.name || 'N/A'}</h3>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MdLocationOn className="h-4 w-4 mr-1" />
                           {booking.venue?.city || 'N/A'}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdPerson className="h-4 w-4 mr-1" />
-                        {booking.user?.name || 'N/A'}
+                      <div className="flex flex-col items-end">
+                          {getBookingStatusBadge(booking.isCancelled)}
+                        <div className="mt-2 text-sm font-medium text-gray-900">
+                          ₹{booking.amount?.toLocaleString() || '0'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {getPaymentStatusBadge(booking.paymentStatus)}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">{booking.user?.email || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdCalendarToday className="h-4 w-4 mr-1" />
-                        {new Date(booking.date).toLocaleDateString()}
+                    </div>
+                    
+                    <div className="border-t border-gray-200 pt-3 mt-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdPerson className="h-4 w-4 mr-1" />
+                            <span className="font-medium">User:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{booking.user?.name || 'N/A'}</div>
+                          <div className="text-xs text-gray-500 ml-5">{booking.user?.email || 'N/A'}</div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdCalendarToday className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Event Date:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{new Date(booking.date).toLocaleDateString()}</div>
+                          <div className="flex items-center text-xs text-gray-500 ml-5">
+                            <MdAccessTime className="h-3 w-3 mr-1" />
+                            {getTimeslotLabel(booking.timeslot)}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdPeopleAlt className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Guests:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{booking.numberOfGuest}</div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center text-sm text-gray-700 mb-1">
+                            <MdPayment className="h-4 w-4 mr-1" />
+                            <span className="font-medium">Booked On:</span>
+                          </div>
+                          <div className="text-sm text-gray-900 ml-5">{new Date(booking.createdAt).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500 ml-5">
+                            {new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <MdAccessTime className="h-3 w-3 mr-1" />
-                        {getTimeslotLabel(booking.timeslot)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MdPeopleAlt className="h-4 w-4 mr-1" />
-                        {booking.numberOfGuest}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        ₹{booking.amount?.toLocaleString() || '0'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {booking.paymentStatus === 'completed' ? (
-                          <span className="text-green-600">Paid</span>
-                        ) : booking.paymentStatus === 'failed' ? (
-                          <span className="text-red-600">Failed</span>
-                        ) : (
-                          <span className="text-yellow-600">Pending</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-700">
-                        {new Date(booking.createdAt).toLocaleDateString()}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {booking.confirmed ? (
-                        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          <MdCheck className="h-4 w-4 mr-1" />
-                          Confirmed
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                    No bookings found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No bookings found
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

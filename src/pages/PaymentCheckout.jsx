@@ -100,6 +100,7 @@ const PaymentCheckout = () => {
         // Get booking data from location state
         if (location.state?.bookingData) {
             setBookingData(location.state.bookingData);
+            console.log(location.state.bookingData);
         } else {
             // If no booking data, redirect back to home
             toast.error('No booking data found');
@@ -150,7 +151,7 @@ const PaymentCheckout = () => {
                                     <span className="font-medium">Guests:</span> {bookingData.bookingForm.numberOfGuest}
                                 </p>
                                 <p className="text-gray-700">
-                                    <span className="font-medium">Amount:</span> ${bookingData.bookingPay}
+                                    <span className="font-medium">Amount:</span> ₹{bookingData.amount}
                                 </p>
                             </div>
                         </div>

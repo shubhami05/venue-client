@@ -404,7 +404,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
               <h3 className="text-lg font-bold">Review Details</h3>
               <button
                 onClick={() => setShowViewModal(false)}
-                className="text-white hover:text-orange-200 text-2xl leading-none"
+                className="text-white bg-inherit hover:text-orange-200 text-3xl leading-none"
               >
                 ×
               </button>
@@ -476,7 +476,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
               <h3 className="text-lg font-bold">Confirm Delete</h3>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="text-white hover:text-red-200 text-2xl leading-none"
+                className="text-white bg-inherit hover:text-red-200 text-3xl leading-none"
               >
                 ×
               </button>
