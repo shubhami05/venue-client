@@ -9,6 +9,7 @@ const Signuppage = () => {
   const [fullname, setFullname] = useState('')
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
+  const [mobileError, setMobileError] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -18,12 +19,56 @@ const Signuppage = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
+  const validateMobile = (number) => {
+    // Remove any non-digit characters
+    const cleanedNumber = number.replace(/\D/g, '');
+    
+    // Check if the number is empty
+    if (!cleanedNumber) {
+      setMobileError('Mobile number is required');
+      return false;
+    }
+    
+    // Check if the number starts with a valid prefix (6-9)
+    if (!/^[6-9]/.test(cleanedNumber)) {
+      setMobileError('Mobile number should start with 6-9');
+      return false;
+    }
+    
+    // Check if the number has exactly 10 digits
+    if (cleanedNumber.length !== 10) {
+      setMobileError('Mobile number should be 10 digits');
+      return false;
+    }
+    
+    setMobileError('');
+    return true;
+  };
+
+  const handleMobileChange = (e) => {
+    const value = e.target.value;
+    // Only allow digits and limit to 10 characters
+    const cleanedValue = value.replace(/\D/g, '').slice(0, 10);
+    setMobile(cleanedValue);
+    validateMobile(cleanedValue);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate mobile number before submission
+    if (!validateMobile(mobile)) {
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/signup`, { fullname, email, mobile, password });
+      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/signup`, { 
+        fullname, 
+        email, 
+        mobile, 
+        password 
+      });
       if (response.data.success) {
         toast.success(response.data.message);
         navigate('/login');
@@ -43,7 +88,6 @@ const Signuppage = () => {
       setIsLoading(false)
     }
   };
-
 
   if (isLoading) {
     return <Loader />
@@ -97,14 +141,20 @@ const Signuppage = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className='h-4 w-5 fill-gray-400 mr-2' viewBox="0 0 512 512">
                 <path d="M164.9 24.6c-7.7-18.6-28-28.5-47.4-23.2l-88 24C12.1 30.2 0 46 0 64C0 311.4 200.6 512 448 512c18 0 33.8-12.1 38.6-29.5l24-88c5.3-19.4-4.6-39.7-23.2-47.4l-96-40c-16.3-6.8-35.2-2.1-46.3 11.6L304.7 368C234.3 334.7 177.3 277.7 144 207.3L193.3 167c13.7-11.2 18.4-30 11.6-46.3l-40-96z" /></svg>
               <input
-                type="number"
+                type="tel"
                 required
                 placeholder="Mobile number"
-                className="w-full bg-transparent text-gray-800 outline-none hide-number-controls"
+                className={`w-full bg-transparent text-gray-800 outline-none hide-number-controls ${mobileError ? 'border-red-500' : ''}`}
                 value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
+                onChange={handleMobileChange}
+                maxLength={10}
+                pattern="[6-9][0-9]{9}"
+                title="Please enter a valid 10-digit mobile number starting with 6-9"
               />
             </div>
+            {mobileError && (
+              <p className="text-red-500 text-sm mt-1">{mobileError}</p>
+            )}
           </div>
           <div className="mb-6">
             <div className="flex items-center border rounded-md px-3 py-2 shadow-md bg-white">
