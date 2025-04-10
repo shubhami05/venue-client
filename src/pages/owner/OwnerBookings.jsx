@@ -18,7 +18,8 @@ function OwnerBookings({ searchTerm = '' }) {
   const [showFilters, setShowFilters] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     venue: 'all',
-    status: 'all',
+    paymentStatus: 'all',
+    isCancelled: 'all',
     dateRange: 'all',
     timeslot: 'all'
   });
@@ -63,10 +64,23 @@ function OwnerBookings({ searchTerm = '' }) {
       filtered = filtered.filter(booking => booking.venue._id === filterOptions.venue);
     }
     
-    // Filter by status
-    if (filterOptions.status !== 'all') {
-      const isConfirmed = filterOptions.status === 'confirmed';
-      filtered = filtered.filter(booking => booking.confirmed === isConfirmed);
+    // Filter by payment status and cancellation status
+    if (filterOptions.paymentStatus !== 'all' || filterOptions.isCancelled !== 'all') {
+      filtered = filtered.filter(booking => {
+        let matchesPaymentStatus = true;
+        let matchesCancelledStatus = true;
+
+        if (filterOptions.paymentStatus !== 'all') {
+          matchesPaymentStatus = booking.paymentStatus === filterOptions.paymentStatus;
+        }
+
+        if (filterOptions.isCancelled !== 'all') {
+          const isCancelled = filterOptions.isCancelled === 'true';
+          matchesCancelledStatus = booking.isCancelled === isCancelled;
+        }
+
+        return matchesPaymentStatus && matchesCancelledStatus;
+      });
     }
     
     // Filter by timeslot
@@ -156,56 +170,6 @@ function OwnerBookings({ searchTerm = '' }) {
     setShowModal(true);
   };
 
-  const handleConfirmBooking = async (bookingId) => {
-    try {
-      const response = await axios.patch(`/api/owner/booking/${bookingId}/confirm`);
-      
-      if (response.data.success) {
-        toast.success('Booking confirmed successfully!');
-        // Update the bookings list
-        setBookings(prevBookings => 
-          prevBookings.map(booking => 
-            booking._id === bookingId ? { ...booking, confirmed: true } : booking
-          )
-        );
-        // Update the selected booking if modal is open
-        if (selectedBooking && selectedBooking._id === bookingId) {
-          setSelectedBooking({ ...selectedBooking, confirmed: true });
-        }
-      } else {
-        toast.error(response.data.message || 'Failed to confirm booking');
-      }
-    } catch (error) {
-      console.error('Confirm booking error:', error);
-      toast.error(error.response?.data?.message || 'Failed to confirm booking. Please try again.');
-    }
-  };
-
-  const handleDeleteBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
-      return;
-    }
-    
-    try {
-      const response = await axios.delete(`/api/owner/booking/${bookingId}`);
-      
-      if (response.data.success) {
-        toast.success('Booking deleted successfully!');
-        // Remove the booking from the list
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== bookingId));
-        // Close the modal if the deleted booking was being viewed
-        if (selectedBooking && selectedBooking._id === bookingId) {
-          setShowModal(false);
-        }
-      } else {
-        toast.error(response.data.message || 'Failed to delete booking');
-      }
-    } catch (error) {
-      console.error('Delete booking error:', error);
-      toast.error(error.response?.data?.message || 'Failed to delete booking. Please try again.');
-    }
-  };
-
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString('en-US', options);
@@ -226,6 +190,38 @@ function OwnerBookings({ searchTerm = '' }) {
         return 'Full Day';
       default:
         return 'Unknown';
+    }
+  };
+
+  const getPaymentStatusBadge = (status) => {
+    switch(status) {
+      case 'completed':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <FaCheckCircle className="mr-1" />
+            Paid
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <FaTimesCircle className="mr-1" />
+            Pending
+          </span>
+        );
+      case 'failed':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <FaTimesCircle className="mr-1" />
+            Failed
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            Unknown
+          </span>
+        );
     }
   };
 
@@ -282,15 +278,28 @@ function OwnerBookings({ searchTerm = '' }) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
-                value={filterOptions.status}
-                onChange={(e) => setFilterOptions({...filterOptions, status: e.target.value})}
+                value={filterOptions.paymentStatus}
+                onChange={(e) => setFilterOptions({...filterOptions, paymentStatus: e.target.value})}
               >
-                <option value="all">All Status</option>
-                <option value="confirmed">Confirmed</option>
+                <option value="all">All Payment Status</option>
+                <option value="completed">Paid</option>
                 <option value="pending">Pending</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Booking Status</label>
+              <select
+                className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+                value={filterOptions.isCancelled}
+                onChange={(e) => setFilterOptions({...filterOptions, isCancelled: e.target.value})}
+              >
+                <option value="all">All Booking Status</option>
+                <option value="false">Active</option>
+                <option value="true">Cancelled</option>
               </select>
             </div>
             <div>
@@ -361,16 +370,12 @@ function OwnerBookings({ searchTerm = '' }) {
                     <td className="px-4 py-3">{booking.numberOfGuest}</td>
                     <td className="px-4 py-3">₹{booking.amount}</td>
                     <td className="px-4 py-3">
-                      {booking.confirmed ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <FaCheckCircle className="mr-1" />
-                          Confirmed
+                      {booking.isCancelled ? (
+                        <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          Cancelled
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          <FaTimesCircle className="mr-1" />
-                          Pending
-                        </span>
+                        getPaymentStatusBadge(booking.paymentStatus)
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -382,15 +387,6 @@ function OwnerBookings({ searchTerm = '' }) {
                           <FaEye size={14} className="mr-1" />
                           <span>View</span>
                         </button>
-                        {!booking.confirmed && (
-                          <button
-                            onClick={() => handleConfirmBooking(booking._id)}
-                            className="p-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-                          >
-                            <FaCheckCircle size={14} className="mr-1" />
-                            <span>Confirm</span>
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>
@@ -417,17 +413,7 @@ function OwnerBookings({ searchTerm = '' }) {
                     <div className="text-sm text-gray-600">{booking.venue.city}</div>
                   </div>
                   <div>
-                    {booking.confirmed ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <FaCheckCircle className="mr-1" />
-                        Confirmed
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        <FaTimesCircle className="mr-1" />
-                        Pending
-                      </span>
-                    )}
+                    {getPaymentStatusBadge(booking.paymentStatus)}
                   </div>
                 </div>
                 <div className="flex flex-col space-y-2 mb-3">
@@ -456,14 +442,6 @@ function OwnerBookings({ searchTerm = '' }) {
                   >
                     <FaEye /> <span>View</span>
                   </button>
-                  {!booking.confirmed && (
-                    <button
-                      onClick={() => handleConfirmBooking(booking._id)}
-                      className="p-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1"
-                    >
-                      <FaCheckCircle /> <span>Confirm</span>
-                    </button>
-                  )}
                 </div>
               </div>
             ))
@@ -546,21 +524,12 @@ function OwnerBookings({ searchTerm = '' }) {
                 </div>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
-                {!selectedBooking.confirmed && (
-                  <button
-                    onClick={() => handleConfirmBooking(selectedBooking._id)}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded flex items-center"
-                  >
-                    <FaCheckCircle className="mr-2" />
-                    Confirm Booking
-                  </button>
-                )}
                 <button
-                  onClick={() => handleDeleteBooking(selectedBooking._id)}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded flex items-center"
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded flex items-center"
                 >
                   <FaTimesCircle className="mr-2" />
-                  Cancel Booking
+                  Close
                 </button>
               </div>
             </div>

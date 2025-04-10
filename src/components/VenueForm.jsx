@@ -309,11 +309,9 @@ const VenueForm = ({ onSubmit, isEditing = false, initialData = null }) => {
 
             // Handle photos differently based on whether we're editing or creating
             if (isEditing) {
-                // In edit mode, we need to handle existing photos and any new ones
-                
                 // Get existing photos that weren't removed
                 const remainingExistingPhotos = images
-                    .filter(img => img.isExisting && !removedImages.includes(img.preview))
+                    .filter(img => img.isExisting)
                     .map(img => img.preview);
                 
                 // Add new photos
@@ -321,26 +319,21 @@ const VenueForm = ({ onSubmit, isEditing = false, initialData = null }) => {
                     .filter(img => !img.isExisting && img.file)
                     .map(img => img.file);
                 
-                // If we have existing photos that weren't removed, add them to the form data
+                // Always include existing photos in the form data
                 if (remainingExistingPhotos.length > 0) {
                     formDataToSend.append('existingPhotos', JSON.stringify(remainingExistingPhotos));
                 }
                 
                 // Add any new photos
                 newPhotos.forEach(photo => {
-                    formDataToSend.append('images', photo);
+                    if (photo instanceof File) {
+                        formDataToSend.append('images', photo);
+                    }
                 });
                 
                 // Add removed photos for tracking
                 if (removedImages.length > 0) {
                     formDataToSend.append('removedPhotos', JSON.stringify(removedImages));
-                }
-                
-                // Ensure we're sending at least one photo (either existing or new)
-                if (remainingExistingPhotos.length === 0 && newPhotos.length === 0) {
-                    toast.error('At least one photo is required', { id: loadingToastId });
-                    setIsSubmitting(false);
-                    return;
                 }
             } else {
                 // In create mode, we need at least one new photo
@@ -356,8 +349,16 @@ const VenueForm = ({ onSubmit, isEditing = false, initialData = null }) => {
                 
                 // Add all new photos
                 newPhotos.forEach(photo => {
-                    formDataToSend.append('images', photo);
+                    if (photo instanceof File) {
+                        formDataToSend.append('images', photo);
+                    }
                 });
+            }
+
+            // Log the form data entries
+            console.log('Form data entries:');
+            for (let [key, value] of formDataToSend.entries()) {
+                console.log(`${key}:`, value);
             }
 
             await onSubmit(formDataToSend);

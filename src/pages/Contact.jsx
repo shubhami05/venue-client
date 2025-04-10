@@ -17,7 +17,7 @@ const Contactpage = () => {
       setLoading(true);
       
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/contact`,
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/contact/send`,
         {
           fullname: name,
           email,

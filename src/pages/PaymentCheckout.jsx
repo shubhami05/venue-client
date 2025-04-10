@@ -16,7 +16,6 @@ const PaymentForm = ({ bookingData, onSuccess, onCancel }) => {
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -95,22 +94,35 @@ const PaymentCheckout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [bookingData, setBookingData] = useState(null);
+    const [timeslotLabel, setTimeslotLabel] = useState('');
+
+    // Fix the timeslot conversion function
+    const getTimeslotLabel = (timeslot) => {
+        switch (timeslot) {
+            case 0:
+                return 'Morning';
+            case 1:
+                return 'Evening';
+            case 2:
+                return 'Full Day';
+            default:
+                return 'Unknown';
+        }
+    };
 
     useEffect(() => {
         // Get booking data from location state
         if (location.state?.bookingData) {
             setBookingData(location.state.bookingData);
-            console.log(location.state.bookingData);
+            // Convert timeslot to label and set it
+            const label = getTimeslotLabel(parseInt(location.state.bookingData.bookingForm.timeslot));
+            setTimeslotLabel(label);
         } else {
             // If no booking data, redirect back to home
             toast.error('No booking data found');
             navigate('/');
         }
     }, [location.state, navigate]);
-
-    if (!bookingData) {
-        return <Loader />;
-    }
 
     const handleSuccess = () => {
         navigate('/bookings');
@@ -119,6 +131,10 @@ const PaymentCheckout = () => {
     const handleCancel = () => {
         navigate(-1);
     };
+
+    if (!bookingData) {
+        return <Loader />;
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-orange-100 to-orange-50  py-12 px-4 sm:px-6 lg:px-8">
@@ -130,7 +146,7 @@ const PaymentCheckout = () => {
                             Complete Your Booking
                         </h2>
                     </div>
-                    
+
                     <div className="p-6">
                         <p className="text-gray-600 mb-6">Please provide your payment details to confirm your booking</p>
 
@@ -145,7 +161,7 @@ const PaymentCheckout = () => {
                                     <span className="font-medium">Date:</span> {new Date(bookingData.bookingForm.date).toLocaleDateString()}
                                 </p>
                                 <p className="text-gray-700">
-                                    <span className="font-medium">Time:</span> {bookingData.bookingForm.timeslot}
+                                    <span className="font-medium">Time:</span> {timeslotLabel}
                                 </p>
                                 <p className="text-gray-700">
                                     <span className="font-medium">Guests:</span> {bookingData.bookingForm.numberOfGuest}
@@ -158,10 +174,10 @@ const PaymentCheckout = () => {
 
                         {/* Payment Form */}
                         <Elements stripe={stripePromise} options={{ clientSecret: bookingData.clientSecret }}>
-                            <PaymentForm 
-                                bookingData={bookingData} 
-                                onSuccess={handleSuccess} 
-                                onCancel={handleCancel} 
+                            <PaymentForm
+                                bookingData={bookingData}
+                                onSuccess={handleSuccess}
+                                onCancel={handleCancel}
                             />
                         </Elements>
                     </div>

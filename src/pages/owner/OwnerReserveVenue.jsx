@@ -4,17 +4,24 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
 import { FaCalendarAlt, FaClock, FaTrash } from 'react-icons/fa';
+import { Modal, Button } from 'flowbite-react';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 const OwnerReserveVenue = () => {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVenue, setSelectedVenue] = useState('');
-  const [bookingDate, setBookingDate] = useState('');
   const [timeslot, setTimeslot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reservations, setReservations] = useState([]);
   const [loadingReservations, setLoadingReservations] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reservationToDelete, setReservationToDelete] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +33,7 @@ const OwnerReserveVenue = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/owner/venue/fetch`);
-      
+
       if (response.data.success) {
         setVenues(response.data.venues);
         if (response.data.venues.length > 0) {
@@ -50,18 +57,18 @@ const OwnerReserveVenue = () => {
       setLoadingReservations(true);
       const response = await axios.get(
         `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/reservation/fetch`,
-       
+
       );
-      
+
       if (response.data.success) {
         // Filter out past reservations and sort by date
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         const upcomingReservations = response.data.reservations
           .filter(reservation => new Date(reservation.date) >= today)
           .sort((a, b) => new Date(a.date) - new Date(b.date));
-        
+
         setReservations(upcomingReservations);
       } else {
 
@@ -78,7 +85,7 @@ const OwnerReserveVenue = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!selectedVenue || !bookingDate || !timeslot) {
+    if (!selectedVenue || !selectedDate || !timeslot) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -87,9 +94,26 @@ const OwnerReserveVenue = () => {
     const loadingToastId = toast.loading('Reserving venue...');
 
     try {
+      // First check availability
+      const availabilityResponse = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/user/venue/check-availability`,
+        {
+          venueId: selectedVenue,
+          date: selectedDate,
+          timeslot: parseInt(timeslot)
+        }
+      );
+
+      if (!availabilityResponse.data.isAvailable) {
+        toast.error(availabilityResponse.data.message || 'Venue is not available for the selected date and time slot', { id: loadingToastId });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // If available, proceed with reservation
       const bookingData = {
         venueId: selectedVenue,
-        date: bookingDate,
+        date: selectedDate,
         timeslot: parseInt(timeslot), // 0-morning, 1-evening, 2-fullday
         isOwnerBooking: true
       };
@@ -104,32 +128,40 @@ const OwnerReserveVenue = () => {
         // Refresh reservations list
         fetchReservations();
         // Reset form
-        setBookingDate('');
         setTimeslot('');
+        setSelectedDate(null); // Reset the date picker
       } else {
         toast.error(response.data.message || 'Failed to reserve venue', { id: loadingToastId });
       }
     } catch (error) {
       console.error('Error reserving venue:', error);
-      toast.error(
-        error.response?.data?.message || 'Failed to reserve venue. Please try again.',
-        { id: loadingToastId }
-      );
+      if (error.response?.status === 409) {
+        // Handle conflict (venue not available)
+        toast.error(error.response?.data?.message || 'Venue is not available for the selected date and time slot', { id: loadingToastId });
+      } else {
+        toast.error(
+          error.response?.data?.message || 'Failed to reserve venue. Please try again.',
+          { id: loadingToastId }
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleRemoveReservation = async (reservationId) => {
-    if (!window.confirm('Are you sure you want to remove this reservation?')) {
-      return;
-    }
+    setReservationToDelete(reservationId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteReservation = async () => {
+    if (!reservationToDelete) return;
 
     const loadingToastId = toast.loading('Removing reservation...');
 
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/reservation/${reservationId}`
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/reservation/${reservationToDelete}`
       );
 
       if (response.data.success) {
@@ -145,16 +177,19 @@ const OwnerReserveVenue = () => {
         error.response?.data?.message || 'Failed to remove reservation. Please try again.',
         { id: loadingToastId }
       );
+    } finally {
+      setShowDeleteModal(false);
+      setReservationToDelete(null);
     }
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -211,7 +246,7 @@ const OwnerReserveVenue = () => {
     <div className="min-h-screen bg-orange-100 py-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center mb-6">
-         
+
           <h1 className="text-3xl font-bold text-orange-900">Reserve Your Venue</h1>
         </div>
 
@@ -224,7 +259,7 @@ const OwnerReserveVenue = () => {
                 <select
                   value={selectedVenue}
                   onChange={(e) => setSelectedVenue(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full p-2 border bg-white  border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
                 >
                   {venues.map((venue) => (
@@ -236,17 +271,35 @@ const OwnerReserveVenue = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-2">Reservation Date</label>
+                <label className="block text-gray-700  font-semibold mb-2">
+                    Select Date
+                </label>
                 <div className="relative">
-                  <FaCalendarAlt className="absolute left-3 top-3 text-gray-400" />
-                  <input
-                    type="date"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    required
-                  />
+                    <DatePicker
+                        selected={selectedDate}
+                        onChange={(date) => {
+                            setSelectedDate(date);
+                        }}
+                        minDate={new Date()}
+                        dateFormat="yyyy-MM-dd"
+                        className="w-100 p-2 pl-10 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholderText="Select a date"
+                        
+                    />
+                    <svg
+                        className="absolute left-3 top-3 h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                    </svg>
                 </div>
               </div>
 
@@ -257,7 +310,7 @@ const OwnerReserveVenue = () => {
                   <select
                     value={timeslot}
                     onChange={(e) => setTimeslot(e.target.value)}
-                    className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full p-2 pl-10 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   >
                     <option value="">Select Time Slot</option>
@@ -273,9 +326,8 @@ const OwnerReserveVenue = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 transition-colors ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
+                className={`bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 transition-colors ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
               >
                 {isSubmitting ? 'Reserving Venue...' : 'Reserve Venue'}
               </button>
@@ -285,7 +337,7 @@ const OwnerReserveVenue = () => {
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4 text-orange-800">Upcoming Reservations</h2>
-          
+
           {loadingReservations ? (
             <div className="flex justify-center py-8">
               <Loader />
@@ -302,7 +354,7 @@ const OwnerReserveVenue = () => {
                       <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Venue</th>
                       <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Date</th>
                       <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Time Slot</th>
-                      <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Status</th>
+
                       <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -318,13 +370,7 @@ const OwnerReserveVenue = () => {
                         <td className="py-4 px-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{getTimeslotLabel(reservation.timeslot)}</div>
                         </td>
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            reservation.confirmed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {reservation.confirmed ? 'Confirmed' : 'Pending'}
-                          </span>
-                        </td>
+
                         <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
                           <button
                             onClick={() => handleRemoveReservation(reservation._id)}
@@ -365,9 +411,8 @@ const OwnerReserveVenue = () => {
                         <span>{getTimeslotLabel(reservation.timeslot)}</span>
                       </div>
                       <div className="mt-2">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          reservation.confirmed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${reservation.confirmed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
                           {reservation.confirmed ? 'Confirmed' : 'Pending'}
                         </span>
                       </div>
@@ -379,6 +424,19 @@ const OwnerReserveVenue = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setReservationToDelete(null);
+        }}
+        onConfirm={confirmDeleteReservation}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this reservation? This action cannot be undone."
+        type="danger"
+      />
     </div>
   );
 };

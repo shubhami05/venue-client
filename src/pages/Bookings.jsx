@@ -71,8 +71,6 @@ const Bookingspage = () => {
 
       if (response.data.success) {
         toast.success('Booking cancelled successfully');
-        // Update the bookings list by removing the cancelled booking
-        setBookings(prevBookings => prevBookings.filter(booking => booking._id !== selectedBooking._id));
         closeCancelModal();
       } else {
         toast.error(response.data.message || 'Failed to cancel booking');
