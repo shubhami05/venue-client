@@ -38,7 +38,8 @@ const Loginpage = () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_BACKEND_URI}/api/auth/login`,
-        { email, password }
+        { email, password },
+        { withCredentials: true }
       );
 
       if (response.data.success) {

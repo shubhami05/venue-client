@@ -68,7 +68,7 @@ const Signuppage = () => {
         email, 
         mobile, 
         password 
-      });
+      }, { withCredentials: true });
       if (response.data.success) {
         toast.success(response.data.message);
         navigate('/login');
