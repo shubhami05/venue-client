@@ -4,13 +4,13 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/auth';
 import { MdPhone } from 'react-icons/md';
-
+import { useNavigate } from 'react-router-dom';
 const OwnerRegisterPage = () => {
   const { user, userLogined } = useAuth();
   const [aadharCard, setAadharCard] = useState(null);
   const [isLoading, setLoading] = useState(false);
   const [agreementChecked, setAgreementChecked] = useState(false);
-
+  const navigate = useNavigate();
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -52,6 +52,8 @@ const OwnerRegisterPage = () => {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          withCredentials: true,
+          transformRequest: [(data) => data]
         }
       );
 
@@ -60,6 +62,7 @@ const OwnerRegisterPage = () => {
         // Reset form
         setAadharCard(null);
         setAgreementChecked(false);
+        navigate('/');
         // Reset file input
         const fileInput = document.getElementById('aadharCard');
         if (fileInput) fileInput.value = '';

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Loader from '../components/Loader';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { useAuth } from '../hooks/auth';
 
 const Signuppage = () => {
   const [fullname, setFullname] = useState('')
@@ -14,6 +15,7 @@ const Signuppage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const { FetchSession } = useAuth();
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -22,25 +24,25 @@ const Signuppage = () => {
   const validateMobile = (number) => {
     // Remove any non-digit characters
     const cleanedNumber = number.replace(/\D/g, '');
-    
+
     // Check if the number is empty
     if (!cleanedNumber) {
       setMobileError('Mobile number is required');
       return false;
     }
-    
+
     // Check if the number starts with a valid prefix (6-9)
     if (!/^[6-9]/.test(cleanedNumber)) {
       setMobileError('Mobile number should start with 6-9');
       return false;
     }
-    
+
     // Check if the number has exactly 10 digits
     if (cleanedNumber.length !== 10) {
       setMobileError('Mobile number should be 10 digits');
       return false;
     }
-    
+
     setMobileError('');
     return true;
   };
@@ -55,23 +57,25 @@ const Signuppage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate mobile number before submission
     if (!validateMobile(mobile)) {
       return;
     }
-    
+
     setIsLoading(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/signup`, { 
-        fullname, 
-        email, 
-        mobile, 
-        password 
+      const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/auth/signup`, {
+        fullname,
+        email,
+        mobile,
+        password
       }, { withCredentials: true });
       if (response.data.success) {
         toast.success(response.data.message);
-        navigate('/login');
+        // Manually update auth context through FetchSession
+        await FetchSession();
+        navigate('/'); // Navigate to home page for all users
       }
       else {
         toast.error("Something went wrong, Please try again later!");

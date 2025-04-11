@@ -19,6 +19,8 @@ function OwnerReviews({ searchTerm }) {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
 
   // Fetch all reviews for owner's venues
   useEffect(() => {
@@ -42,7 +44,7 @@ function OwnerReviews({ searchTerm }) {
   const fetchVenueReviews = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/api/owner/review/fetch`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/owner/review/fetch`);
 
       if (response.data.success) {
         setReviews(response.data.reviews);
@@ -148,6 +150,54 @@ function OwnerReviews({ searchTerm }) {
   const currentItems = filteredReviews.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
 
+  const handleSubmitReply = async (reviewId) => {
+    if (!replyMessage.trim()) {
+      toast.error('Please enter a reply message');
+      return;
+    }
+
+    setIsSubmittingReply(true);
+    const loadingToastId = toast.loading('Submitting reply...');
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/owner/review/reply/${reviewId}`,
+        { message: replyMessage }
+      );
+
+      if (response.data.success) {
+        toast.success('Reply submitted successfully', { id: loadingToastId });
+        // Update the reviews list with the new reply
+        fetchVenueReviews();
+        handleCloseModal();
+        setReplyMessage(''); // Clear the reply input
+      } else {
+        toast.error(response.data.message || 'Failed to submit reply', { id: loadingToastId });
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      toast.error(error.response?.data?.message || 'Failed to submit reply', { id: loadingToastId });
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
+  // Add this function after other utility functions
+  const getReplyStatus = (review) => {
+    if (review.ownerReply?.message) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          Replied
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        Not Replied
+      </span>
+    );
+  };
+
   if (isLoading) {
     return <Loader />;
   }
@@ -233,6 +283,7 @@ function OwnerReviews({ searchTerm }) {
                   <th className="px-4 py-3 text-left">Rating</th>
                   <th className="px-4 py-3 text-left">Customer</th>
                   <th className="px-4 py-3 text-left">Date</th>
+                  <th className="px-4 py-3 text-left">Reply Status</th>
                   <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
@@ -254,6 +305,9 @@ function OwnerReviews({ searchTerm }) {
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {formatDate(review.createdAt)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {getReplyStatus(review)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-center gap-2">
@@ -288,8 +342,9 @@ function OwnerReviews({ searchTerm }) {
                     <div className="font-medium text-gray-900">{review.venue.name}</div>
                     <div className="text-sm text-gray-600">{formatDate(review.createdAt)}</div>
                   </div>
-                  <div className="flex">
+                  <div className="flex flex-col items-end gap-2">
                     {renderStars(review.rating)}
+                    {getReplyStatus(review)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 mb-2">
@@ -374,7 +429,55 @@ function OwnerReviews({ searchTerm }) {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              {/* Owner Reply Section */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Your Reply</h4>
+                {selectedReview.ownerReply?.message ? (
+                  <div>
+                    <div className="bg-white p-4 rounded-lg border border-green-200">
+                      <p className="text-gray-700">{selectedReview.ownerReply.message}</p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <p className="text-sm text-gray-500">
+                          Replied on: {formatDate(selectedReview.ownerReply.createdAt)}
+                        </p>
+                        <button
+                          onClick={() => {
+                            setReplyMessage(selectedReview.ownerReply.message);
+                            selectedReview.ownerReply = null; // Allow editing the reply
+                          }}
+                          className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                        >
+                          Edit Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <textarea
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      placeholder="Write your reply here..."
+                      className="w-full p-3 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      rows="4"
+                      disabled={isSubmittingReply}
+                    ></textarea>
+                    <div className="flex justify-end mt-3">
+                      <button
+                        onClick={() => handleSubmitReply(selectedReview._id)}
+                        disabled={isSubmittingReply || !replyMessage.trim()}
+                        className={`px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center ${
+                          (isSubmittingReply || !replyMessage.trim()) ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {isSubmittingReply ? 'Submitting...' : 'Submit Reply'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => {
                     handleCloseModal();
@@ -384,6 +487,12 @@ function OwnerReviews({ searchTerm }) {
                 >
                   <FaEnvelope className="mr-2" />
                   Email Customer
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
+                >
+                  Close
                 </button>
               </div>
             </div>

@@ -225,6 +225,19 @@ function OwnerBookings({ searchTerm = '' }) {
     }
   };
 
+  // First, add a new function to combine payment and cancellation status
+  const getBookingStatusDetails = (booking) => {
+    if (booking.isCancelled) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <FaTimesCircle className="mr-1" />
+          Cancelled
+        </span>
+      );
+    }
+    return getPaymentStatusBadge(booking.paymentStatus);
+  };
+
   if (isLoading) {
     return <Loader />;
   }
@@ -413,7 +426,7 @@ function OwnerBookings({ searchTerm = '' }) {
                     <div className="text-sm text-gray-600">{booking.venue.city}</div>
                   </div>
                   <div>
-                    {getPaymentStatusBadge(booking.paymentStatus)}
+                    {getBookingStatusDetails(booking)}
                   </div>
                 </div>
                 <div className="flex flex-col space-y-2 mb-3">
@@ -514,12 +527,15 @@ function OwnerBookings({ searchTerm = '' }) {
                 <h4 className="font-semibold text-orange-800 mb-2 flex items-center">
                   <FaCalendarAlt className="mr-2" /> Booking Details
                 </h4>
-                <div className="space-y-1 text-gray-700">
+                <div className="space-y-2 text-gray-700">
                   <p><span className="font-medium">Date:</span> {formatDateSimple(selectedBooking.date)}</p>
                   <p><span className="font-medium">Time Slot:</span> {getTimeslotText(selectedBooking.timeslot)}</p>
                   <p><span className="font-medium">Number of Guests:</span> {selectedBooking.numberOfGuest}</p>
-                  <p><span className="font-medium">Amount Paid:</span> ₹{selectedBooking.amount}</p>
-                  <p><span className="font-medium">Status:</span> {selectedBooking.confirmed ? 'Confirmed' : 'Pending Confirmation'}</p>
+                  <p><span className="font-medium">Amount:</span> ₹{selectedBooking.amount}</p>
+                  <div className="flex items-center">
+                    <span className="font-medium mr-2">Status:</span>
+                    {getBookingStatusDetails(selectedBooking)}
+                  </div>
                   <p><span className="font-medium">Booking Created:</span> {formatDate(selectedBooking.createdAt)}</p>
                 </div>
               </div>

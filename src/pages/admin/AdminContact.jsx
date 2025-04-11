@@ -14,6 +14,8 @@ const AdminContact = ({ searchTerm = '' }) => {
   const [filterOptions, setFilterOptions] = useState({
     contactDate: 'all'
   });
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   useEffect(() => {
     fetchContacts();
@@ -86,6 +88,16 @@ const AdminContact = ({ searchTerm = '' }) => {
       console.error('Error deleting contact:', error);
       toast.error(error.response?.data?.message || 'Failed to delete contact');
     }
+  };
+
+  const openMessageModal = (contact) => {
+    setSelectedMessage({
+      message: contact.message,
+      fullname: contact.fullname,
+      email: contact.email,
+      date: formatDate(contact.createdAt)
+    });
+    setShowMessageModal(true);
   };
 
   const filteredContacts = contacts.filter(contact => {
@@ -217,7 +229,7 @@ const AdminContact = ({ searchTerm = '' }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredContacts.length > 0 ? (
               filteredContacts.map((contact) => (
-                <tr key={contact._id} className="hover:bg-gray-50">
+                <tr key={contact._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openMessageModal(contact)}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{contact.fullname}</div>
                     {contact.user && (
@@ -239,7 +251,10 @@ const AdminContact = ({ searchTerm = '' }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center">
+                    <div 
+                      className="flex items-center  hover:bg-gray-50 rounded-md transition-colors"
+                     
+                    >
                       <MdMessage className="h-4 w-4 mr-1 mt-1 text-orange-600" />
                       <div className="text-sm text-gray-900 max-w-xs truncate px-3 py-2 rounded">
                         {contact.message.length > 100 
@@ -289,7 +304,8 @@ const AdminContact = ({ searchTerm = '' }) => {
           filteredContacts.map((contact) => (
             <div 
               key={contact._id}
-              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              onClick={() => openMessageModal(contact)}
             >
               <div className="p-4">
                 <div className="flex justify-between items-start mb-3">
@@ -329,7 +345,9 @@ const AdminContact = ({ searchTerm = '' }) => {
                         <MdMessage className="h-4 w-4 mr-1 text-orange-600" />
                         <span className="font-medium">Message:</span>
                       </div>
-                      <div className="text-sm text-gray-900 ml-5">
+                      <div 
+                        className="text-sm text-gray-900 ml-5 cursor-pointer hover:text-orange-600"
+                      >
                         {contact.message.length > 100 
                           ? `${contact.message.substring(0, 100)}...` 
                           : contact.message}
@@ -364,6 +382,63 @@ const AdminContact = ({ searchTerm = '' }) => {
           </div>
         )}
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && selectedMessage && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowMessageModal(false)}>
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-orange-600 text-white p-4 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-bold">Message Details</h3>
+                <p className="text-sm opacity-90">{selectedMessage.date}</p>
+              </div>
+              <button
+                onClick={() => setShowMessageModal(false)}
+                className="text-white bg-inherit hover:text-orange-200 text-3xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="bg-orange-50 p-4 rounded-lg mb-4">
+                <div className="flex items-center mb-3">
+                  <div className="font-medium text-gray-900 mr-2">From:</div>
+                  <div>{selectedMessage.fullname}</div>
+                </div>
+                <div className="mb-3">
+                  <div className="font-medium text-gray-900 mb-1">Message:</div>
+                  <p className="text-gray-700 border-l-4 border-orange-300 pl-3 py-2 whitespace-pre-wrap">
+                    {selectedMessage.message}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    const contact = {
+                      fullname: selectedMessage.fullname,
+                      email: selectedMessage.email,
+                      message: selectedMessage.message
+                    };
+                    handleEmailReply(contact);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+                >
+                  <MdReply className="mr-2" />
+                  Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
