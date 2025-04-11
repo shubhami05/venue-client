@@ -26,7 +26,7 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div 
+      <div
         ref={modalRef}
         className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar"
       >
@@ -85,11 +85,21 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
               {/* Venue Details */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-2">Venue Details</h3>
+                <div className="flex items-start">
+                  <MdLocationOn className="h-5 w-5 text-gray-500 mr-2" />
+                  <span>{(venue.address) || 'N/A'} {venue.locationURL && (
+                      
+                      <a
+                        href={venue.locationURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Location
+                      </a>
+                  )}</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center">
-                    <MdLocationOn className="h-5 w-5 text-gray-500 mr-2" />
-                    <span>{(venue.address + ', ' + venue.city) || 'N/A'}</span>
-                  </div>
                   <div className="flex items-center">
                     <MdCategory className="h-5 w-5 text-gray-500 mr-2" />
                     <span>{venue.type || 'N/A'}</span>
@@ -98,19 +108,7 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
                     <MdHouse className="h-5 w-5 text-gray-500 mr-2" />
                     <span>{venue.rooms + ' Rooms, ' + venue.halls + ' Halls'}</span>
                   </div>
-                  {venue.locationURL && (
-                    <div className="flex items-center">
-                      <MdLocationOn className="h-5 w-5 text-gray-500 mr-2" />
-                      <a 
-                        href={venue.locationURL} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        View Location
-                      </a>
-                    </div>
-                  )}
+
                 </div>
               </div>
 
@@ -155,13 +153,13 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
                     <p className="text-sm text-gray-500">Food Options</p>
                     <div className="space-y-1">
                       <p className="text-sm flex items-center">
-                        Outside Food: 
+                        Outside Food:
                         <span className={`ml-2 ${venue.food?.outsideAllowed ? 'text-green-600' : 'text-red-600'}`}>
                           {venue.food?.outsideAllowed ? '✓ Allowed' : '✕ Not Allowed'}
                         </span>
                       </p>
                       <p className="text-sm flex items-center">
-                        Provided by Venue: 
+                        Provided by Venue:
                         <span className={`ml-2 ${venue.food?.providedByVenue ? 'text-green-600' : 'text-red-600'}`}>
                           {venue.food?.providedByVenue ? '✓ Yes' : '✕ No'}
                         </span>
@@ -172,13 +170,13 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
                     <p className="text-sm text-gray-500">Decoration</p>
                     <div className="space-y-1">
                       <p className="text-sm flex items-center">
-                        Outside Decoration: 
+                        Outside Decoration:
                         <span className={`ml-2 ${venue.decoration?.outsideAllowed ? 'text-green-600' : 'text-red-600'}`}>
                           {venue.decoration?.outsideAllowed ? '✓ Allowed' : '✕ Not Allowed'}
                         </span>
                       </p>
                       <p className="text-sm flex items-center">
-                        Provided by Venue: 
+                        Provided by Venue:
                         <span className={`ml-2 ${venue.decoration?.providedByVenue ? 'text-green-600' : 'text-red-600'}`}>
                           {venue.decoration?.providedByVenue ? '✓ Yes' : '✕ No'}
                         </span>
@@ -194,7 +192,7 @@ const VenueDetailsModal = ({ venue, onClose, loading }) => {
                   <h3 className="text-lg font-semibold mb-2">Parking</h3>
                   <div className="space-y-1">
                     <p className="text-sm flex items-center">
-                      Available: 
+                      Available:
                       <span className={`ml-2 ${venue.parking.available ? 'text-green-600' : 'text-red-600'}`}>
                         {venue.parking.available ? '✓ Yes' : '✕ No'}
                       </span>

@@ -290,11 +290,9 @@ const PendingVenues = ({ searchTerm = '' }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col space-y-1">
-                    <div className="flex items-center text-sm text-gray-900">
+                    
+                    <div className="text-sm flex items-center ">
                       <MdLocationOn className="h-4 w-4 mr-1" />
-                      {venue.address || 'N/A'}
-                    </div>
-                    <div className="text-sm    ">
                       {venue.city || 'N/A'}
                     </div>
                   </div>

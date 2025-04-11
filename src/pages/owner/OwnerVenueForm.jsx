@@ -514,7 +514,8 @@ const OwnerVenueForm = () => {
                 {/* With Food Rent (Conditional) */}
                 {formData.food.providedByVenue && (
                     <>
-                        <h3 className="text-xl font-semibold mb-2">With Food Rent</h3>
+                        <h3 className="text-xl font-semibold mb-2">With Food Rent <span className='mb-2 text-sm font-semibold text-gray-800'>(Please enter per plate price)</span></h3>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="mb-4">
                                 <label className="block text-gray-700 font-semibold">Morning Rent</label>
