@@ -22,7 +22,7 @@ import PendingOwners from '../pages/admin/PendingOwners';
 import AdminReviews from '../pages/admin/AdminReviews';
 import AdminInquiries from '../pages/admin/AdminInquiries';
 import AdminContact from '../pages/admin/AdminContact';
-
+import AdminOwnerSupport from '../pages/admin/AdminOwnerSupport';
 const AdminLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -71,7 +71,8 @@ const AdminLayout = () => {
                             <Route path='/reviews' element={<AdminReviews searchTerm={searchTerm} />} />
                             <Route path='/inquiries' element={<AdminInquiries searchTerm={searchTerm} />} />
                             <Route path='/contact' element={<AdminContact searchTerm={searchTerm} />} />
-                            <Route path='/analytics' element={<AdminAnalytics />} />
+                            <Route path='/ownersupport' element={<AdminOwnerSupport searchTerm={searchTerm} />} />
+                       
                             <Route path='/profile' element={<AdminProfile />} />
                             <Route path='/settings' element={<AdminSettings />} />
                             <Route path="/venues/pending" element={<PendingVenues searchTerm={searchTerm}/>} />

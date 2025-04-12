@@ -76,7 +76,7 @@ const OwnerReserveVenue = () => {
         // Split reservations into upcoming and past
         const upcoming = [];
         const past = [];
-        
+
         response.data.reservations.forEach(reservation => {
           const reservationDate = new Date(reservation.date);
           if (reservationDate >= today) {
@@ -88,7 +88,7 @@ const OwnerReserveVenue = () => {
 
         // Sort upcoming by date ascending (nearest first)
         upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
-        
+
         // Sort past by date descending (most recent first)
         past.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -108,7 +108,7 @@ const OwnerReserveVenue = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!selectedVenue || !selectedDate || !timeslot) {
       toast.error('Please fill in all required fields');
       return;
@@ -312,34 +312,34 @@ const OwnerReserveVenue = () => {
 
               <div className="mb-4">
                 <label className="block text-gray-700  font-semibold mb-2">
-                    Select Date
+                  Select Date
                 </label>
                 <div className="relative">
-                    <DatePicker
-                        selected={selectedDate}
-                        onChange={(date) => {
-                            setSelectedDate(date);
-                        }}
-                        minDate={new Date()}
-                        dateFormat="yyyy-MM-dd"
-                        className="w-100 p-2 pl-10 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholderText="Select a date"
-                        
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={(date) => {
+                      setSelectedDate(date);
+                    }}
+                    minDate={new Date()}
+                    dateFormat="yyyy-MM-dd"
+                    className="w-100 p-2 pl-10 border bg-white border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholderText="Select a date"
+
+                  />
+                  <svg
+                    className="absolute left-3 top-3 h-5 w-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
-                    <svg
-                        className="absolute left-3 top-3 h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                    </svg>
+                  </svg>
                 </div>
               </div>
 
@@ -379,21 +379,19 @@ const OwnerReserveVenue = () => {
           {/* Tabs */}
           <div className="inline-flex border-b border-gray-200 mb-6 rounded-md relative">
             <button
-              className={`py-2 px-6 font-medium text-base rounded-md transition-all duration-300 ${
-                activeTab === 'upcoming'
+              className={`py-2 px-6 font-medium text-base rounded-md transition-all duration-300 ${activeTab === 'upcoming'
                   ? 'text-white bg-orange-600 shadow-md'
                   : 'text-gray-500 bg-white hover:text-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveTab('upcoming')}
             >
               Upcoming Reservations
             </button>
             <button
-              className={`py-2 px-6 font-medium text-base rounded-md transition-all duration-300 ${
-                activeTab === 'past'
+              className={`py-2 px-6 font-medium text-base rounded-md transition-all duration-300 ${activeTab === 'past'
                   ? 'text-white bg-orange-600 shadow-md'
                   : 'text-gray-500 bg-white hover:text-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveTab('past')}
             >
               Past Reservations
@@ -404,7 +402,7 @@ const OwnerReserveVenue = () => {
           <div className="bg-white p-4 rounded-lg  mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <h5 className="text-lg font-semibold text-gray-900">
-                {activeTab === 'upcoming' 
+                {activeTab === 'upcoming'
                   ? `${getFilteredReservations(reservations).length} Upcoming ${getFilteredReservations(reservations).length === 1 ? 'Reservation' : 'Reservations'}`
                   : `${getFilteredReservations(pastReservations).length} Past ${getFilteredReservations(pastReservations).length === 1 ? 'Reservation' : 'Reservations'}`
                 }
@@ -608,13 +606,13 @@ const OwnerReserveVenue = () => {
             ) : (
               <>
                 {/* Table view for larger screens */}
-                <div className="hidden md:block overflow-x-auto">
+                <div className="hidden md:block rounded-lg overflow-x-auto">
                   <table className="min-w-full bg-white">
                     <thead className="bg-orange-50">
-                      <tr>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Venue</th>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Date</th>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-orange-800 uppercase tracking-wider">Time Slot</th>
+                      <tr className="bg-orange-600 text-white">
+                        <th className="px-4 py-3 text-left">Venue</th>
+                        <th className="px-4 py-3 text-left">Date</th>
+                        <th className="px-4 py-3 text-left">Time Slot</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">

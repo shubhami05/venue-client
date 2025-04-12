@@ -9,11 +9,11 @@ import {
   MdPeople,
   MdSettings,
   MdSupervisorAccount,
-  MdAnalytics,
   MdBookOnline,
   MdReviews,
   MdEmail,
-  MdPayment
+  MdContactSupport,
+  MdSupportAgent
 } from "react-icons/md";
 
 export const sidebarConfig = {
@@ -61,6 +61,11 @@ export const sidebarConfig = {
         path: '/owner/gethelp',
         icon: MdOutlineMessage,
         label: 'Get Help'
+      },
+      {
+        path: '/owner/support',
+        icon: MdContactSupport,
+        label: 'Support'
       }
     ]
   },
@@ -108,6 +113,11 @@ export const sidebarConfig = {
         icon: MdEmail,
         label: 'Contact'
       },
+      {
+        path: '/admin/ownersupport',
+        icon: MdSupportAgent,
+        label: 'Owner Support'
+      }
 
     ],
     otherMenu: [

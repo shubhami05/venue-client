@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { FaMoneyBill, FaQuestionCircle, FaStar, FaUserTag, FaHotel, FaCalendarCheck, FaCalendarAlt, FaSpinner, FaBuilding } from 'react-icons/fa'
+import { FaMoneyBill, FaQuestionCircle, FaStar, FaUserTag, FaHotel, FaCalendarCheck, FaCalendarAlt, FaSpinner, FaBuilding, FaChartLine } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import Loader from '../../components/Loader'
+import { LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Line } from 'recharts'
+import { ResponsiveContainer } from 'recharts'
 
 const OwnerDashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +19,8 @@ const OwnerDashboard = () => {
         pendingReviews: 0,
         pendingBookings: 0,
         confirmedBookings: 0,
-        monthlyBookings: []
+        monthlyBookings: [],
+        revenueTrend: []
     });
     const [activeTab, setActiveTab] = useState('distribution');
 
@@ -136,6 +139,7 @@ const OwnerDashboard = () => {
                     </div>
                 </div>
 
+
                 <div className="bg-orange-50 shadow-lg rounded-md p-6">
                     <h2 className="text-xl font-semibold text-gray-800 mb-4">Properties</h2>
                     <div className="space-y-4">
@@ -161,9 +165,43 @@ const OwnerDashboard = () => {
                     </div>
                 </div>
             </div>
+            {/* Revenue Line Graph */}
+            <div className="bg-orange-50 shadow-lg mb-8 rounded-md p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Revenue Trend</h2>
+                <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={analytics.revenueTrend}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e06422" opacity={0.2} />
+                            <XAxis dataKey="month" stroke="#e06422" />
+                            <YAxis yAxisId="left" stroke="#e06422" />
+                            <Tooltip
+                                formatter={(value, name) => {
+                                    return [formatCurrency(value), name];
+                                }}
+                                contentStyle={{
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e06422',
+                                    borderRadius: '0.5rem',
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                                }}
+                            />
+                            <Legend />
+                            <Line
+                                yAxisId="left"
+                                type="monotone"
+                                dataKey="amount"
+                                name="Revenue"
+                                stroke="#e06422"
+                                strokeWidth={2}
+                                dot={{ r: 4, fill: '#e06422' }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
 
             {/* Bottom Stats - Column Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1  md:grid-cols-3 gap-6">
                 {/* Rating Analytics Card */}
                 <div className="shadow-lg bg-orange-50 p-5 rounded-md">
                     <div className="flex items-center justify-between mb-4">
@@ -180,13 +218,13 @@ const OwnerDashboard = () => {
                         <hr />
                         <div className="space-y-2">
                             <div className="flex space-x-2 mb-4">
-                                <button 
+                                <button
                                     className={`px-3 py-1 rounded-md ${activeTab === 'distribution' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                                     onClick={() => setActiveTab('distribution')}
                                 >
                                     Distribution
                                 </button>
-                                <button 
+                                <button
                                     className={`px-3 py-1 rounded-md ${activeTab === 'venues' ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-700'}`}
                                     onClick={() => setActiveTab('venues')}
                                 >
@@ -201,7 +239,7 @@ const OwnerDashboard = () => {
                                         const count = analytics.ratingDistribution?.[star] || 0;
                                         const maxCount = Math.max(...Object.values(analytics.ratingDistribution || {}));
                                         const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                                        
+
                                         return (
                                             <div key={star} className="space-y-1">
                                                 <div className="flex items-center justify-between">
@@ -209,7 +247,7 @@ const OwnerDashboard = () => {
                                                     <span className="font-semibold text-gray-900">{count}</span>
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2">
-                                                    <div 
+                                                    <div
                                                         className="bg-orange-500 h-2 rounded-full transition-all duration-300"
                                                         style={{ width: `${percentage}%` }}
                                                     />
@@ -228,7 +266,7 @@ const OwnerDashboard = () => {
                                             const reviewCount = analytics.ratingDistribution?.[Math.round(venue.rating)] || 0;
                                             const maxCount = Math.max(...Object.values(analytics.ratingDistribution || {}));
                                             const percentage = maxCount > 0 ? (reviewCount / maxCount) * 100 : 0;
-                                            
+
                                             return (
                                                 <div key={venue.id} className="space-y-1">
                                                     <div className="flex items-center justify-between">
@@ -241,7 +279,7 @@ const OwnerDashboard = () => {
                                                         </div>
                                                     </div>
                                                     <div className="w-full bg-gray-200 rounded-full h-2">
-                                                        <div 
+                                                        <div
                                                             className="bg-orange-500 h-2 rounded-full transition-all duration-300"
                                                             style={{ width: `${percentage}%` }}
                                                         />
@@ -274,8 +312,8 @@ const OwnerDashboard = () => {
                                 <span className="font-semibold text-green-600">{analytics.confirmedBookings}</span>
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-gray-600">Pending Bookings</span>
-                                <span className="font-semibold text-orange-600">{analytics.pendingBookings}</span>
+                                <span className="text-gray-600">Cancelled Bookings</span>
+                                <span className="font-semibold text-orange-600">{analytics.cancelledBookings}</span>
                             </div>
                         </div>
                     </div>

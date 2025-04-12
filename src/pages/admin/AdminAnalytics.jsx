@@ -256,7 +256,7 @@ const AdminAnalytics = () => {
             <FaMoneyBillAlt className="h-6 w-6 text-orange-600" />
           </div>
           <div className="flex flex-col">
-            <span className="text-3xl font-bold text-orange-900">{formatCurrency(stats.totalRevenue)}</span>
+            <span className="text-3xl font-bold text-orange-900">{formatCurrency(stats.platformFee)}</span>
             <span className="text-sm text-orange-700 mt-1">From all confirmed bookings</span>
             <div className="mt-4 space-y-2">
               {stats.recentBookings.slice(0, 3).map((booking) => (
@@ -265,7 +265,7 @@ const AdminAnalytics = () => {
                     <FaBuilding className="text-orange-600" />
                     <span className="text-orange-900">{booking.venueName}</span>
                   </div>
-                  <span className="font-medium text-orange-900">{formatCurrency(booking.amount)}</span>
+                  <span className="font-medium text-orange-900">{formatCurrency(booking.platformFee)}</span>
                 </div>
               ))}
               {stats.recentBookings.length > 3 && (
@@ -290,7 +290,6 @@ const AdminAnalytics = () => {
                   <th className="pb-2">Venue</th>
                   <th className="pb-2">User</th>
                   <th className="pb-2">Rating</th>
-                  <th className="pb-2">Message</th>
                 </tr>
               </thead>
               <tbody>
@@ -311,9 +310,7 @@ const AdminAnalytics = () => {
                           ))}
                         </div>
                       </td>
-                      <td className="py-2 text-sm text-orange-700 truncate max-w-xs">
-                        {review.message.length > 50 ? `${review.message.substring(0, 50)}...` : review.message}
-                      </td>
+                     
                     </tr>
                   ))
                 ) : (

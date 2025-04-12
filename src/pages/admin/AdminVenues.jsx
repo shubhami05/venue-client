@@ -245,7 +245,7 @@ const AdminVenues = ({ searchTerm }) => {
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Contact</th>
+                   
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rating</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
@@ -275,18 +275,7 @@ const AdminVenues = ({ searchTerm }) => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col space-y-1">
-                          <div className="flex items-center text-sm text-gray-900">
-                            <MdMail className="h-4 w-4 mr-1" />
-                            {venue.owner?.email || 'N/A'}
-                          </div>
-                          <div className="flex items-center text-sm text-gray-900">
-                            <MdPhone className="h-4 w-4 mr-1" />
-                            {venue.owner?.phone || 'N/A'}
-                          </div>
-                        </div>
-                      </td>
+                     
                       <td className="px-6 py-4 whitespace-nowrap">
                         {venue.rating ? (
                           <div className="flex items-center">
@@ -299,7 +288,7 @@ const AdminVenues = ({ searchTerm }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          ₹{venue.withoutFoodRent?.fullday || 'N/A'}
+                          ₹{venue.bookingPay || 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

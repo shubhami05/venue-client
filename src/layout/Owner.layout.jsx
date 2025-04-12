@@ -20,7 +20,7 @@ import OwnerGethelp from '../pages/owner/OwnerGethelp';
 import VenueForm from '../pages/owner/OwnerVenueForm';
 import EditVenue from '../pages/owner/EditVenue';
 import OwnerReserveVenue from '../pages/owner/OwnerReserveVenue';
-
+import OwnerSupport from '../pages/owner/OwnerSupport';
 const OwnerLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +68,7 @@ const OwnerLayout = () => {
                             <Route path='/bookings' element={<OwnerBookings searchTerm={searchTerm} />} />
                             <Route path='/reserve-venue' element={<OwnerReserveVenue />} />
                             <Route path='/gethelp' element={<OwnerGethelp />} />
+                            <Route path='/support' element={<OwnerSupport />} />
                             <Route path='/profile' element={<OwnerProfile />} />
                         
                             <Route path='/*' element={<NotFoundPage />} />
