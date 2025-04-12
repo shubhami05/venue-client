@@ -3,7 +3,7 @@ import React from 'react'
 function OwnerGethelp() {
   return (
     <div>
-      Owner Help form to send in admin
+      Owner Help form banavo bhai
     </div>
   )
 }
