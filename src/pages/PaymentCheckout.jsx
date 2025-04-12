@@ -16,6 +16,7 @@ const PaymentForm = ({ bookingData, onSuccess, onCancel }) => {
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState(null);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -95,6 +96,8 @@ const PaymentCheckout = () => {
     const navigate = useNavigate();
     const [bookingData, setBookingData] = useState(null);
     const [timeslotLabel, setTimeslotLabel] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     // Fix the timeslot conversion function
     const getTimeslotLabel = (timeslot) => {
@@ -113,9 +116,10 @@ const PaymentCheckout = () => {
     useEffect(() => {
         // Get booking data from location state
         if (location.state?.bookingData) {
-            setBookingData(location.state.bookingData);
+            const data = location.state.bookingData;
+            setBookingData(data);
             // Convert timeslot to label and set it
-            const label = getTimeslotLabel(parseInt(location.state.bookingData.bookingForm.timeslot));
+            const label = getTimeslotLabel(parseInt(data.bookingForm.timeslot));
             setTimeslotLabel(label);
         } else {
             // If no booking data, redirect back to home
@@ -125,19 +129,25 @@ const PaymentCheckout = () => {
     }, [location.state, navigate]);
 
     const handleSuccess = () => {
-        navigate('/bookings');
+        // Navigate to confirmation page with payment intent ID
+        navigate(`/booking-confirmation`, {
+            state: {
+                bookingData: bookingData
+            }
+        });
     };
 
     const handleCancel = () => {
         navigate(-1);
     };
 
+   
     if (!bookingData) {
         return <Loader />;
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-orange-100 to-orange-50  py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-gradient-to-b from-orange-100 to-orange-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md mx-auto">
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                     <div className="bg-orange-600 px-6 py-4">
@@ -166,9 +176,20 @@ const PaymentCheckout = () => {
                                 <p className="text-gray-700">
                                     <span className="font-medium">Guests:</span> {bookingData.bookingForm.numberOfGuest}
                                 </p>
-                                <p className="text-gray-700">
-                                    <span className="font-medium">Amount:</span> ₹{bookingData.amount}
-                                </p>
+                                <div className="border-t border-orange-200 pt-2 mt-2">
+                                    <div className="flex justify-between text-gray-700">
+                                        <span className="font-medium">Base Price:</span>
+                                        <span>₹{bookingData.amount}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-700">
+                                        <span className="font-medium">Platform Fee (3%):</span>
+                                        <span className="text-green-600">₹{bookingData.platformFee}</span>
+                                    </div>
+                                    <div className="flex justify-between text-gray-700 font-semibold mt-2">
+                                        <span>Total Amount:</span>
+                                        <span className="text-orange-600">₹{bookingData.totalAmount}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

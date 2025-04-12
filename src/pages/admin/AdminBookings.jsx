@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdPerson, MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck, MdPayment, MdClose } from 'react-icons/md';
+import { MdPerson, MdLocationOn, MdCalendarToday, MdAccessTime, MdPeopleAlt, MdCheck, MdPayment, MdClose, MdDelete } from 'react-icons/md';
 import { FaFilter } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -15,6 +15,8 @@ const AdminBookings = ({ searchTerm = '' }) => {
     bookingDate: 'all',
     venueName: 'all'
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -169,6 +171,35 @@ const AdminBookings = ({ searchTerm = '' }) => {
     }
   };
 
+  const handleDeleteBooking = async (bookingId) => {
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_BACKEND_URI}/api/admin/bookings/delete/${bookingId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        toast.success('Booking deleted successfully');
+        // Refresh the bookings list
+        fetchBookings();
+      } else {
+        toast.error(response.data.message || 'Failed to delete booking');
+      }
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete booking');
+    }
+  };
+
+  const confirmDelete = (booking) => {
+    setSelectedBooking(booking);
+    setShowDeleteModal(true);
+  };
+
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
@@ -264,6 +295,7 @@ const AdminBookings = ({ searchTerm = '' }) => {
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booked On</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -326,6 +358,16 @@ const AdminBookings = ({ searchTerm = '' }) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getBookingStatusBadge(booking.isCancelled)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => confirmDelete(booking)}
+                              className="p-2 text-red-600 rounded-lg hover:text-red-500"
+                            >
+                              <MdDelete className="h-5 w-5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -421,6 +463,39 @@ const AdminBookings = ({ searchTerm = '' }) => {
               </div>
             )}
           </div>
+
+          {/* Delete Confirmation Modal */}
+          {showDeleteModal && selectedBooking && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-6 max-w-md w-full">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Cancel Booking</h3>
+                <p className="text-gray-600 mb-6">
+                  Are you sure you want to delete this booking? This action cannot be undone.
+                </p>
+                <div className="flex justify-end space-x-4">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setSelectedBooking(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteBooking(selectedBooking._id);
+                      setShowDeleteModal(false);
+                      setSelectedBooking(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+                  >
+                      Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

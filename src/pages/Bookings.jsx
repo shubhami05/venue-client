@@ -72,6 +72,7 @@ const Bookingspage = () => {
       if (response.data.success) {
         toast.success('Booking cancelled successfully');
         closeCancelModal();
+        fetchUserBookings();
       } else {
         toast.error(response.data.message || 'Failed to cancel booking');
       }

@@ -91,7 +91,6 @@ const VenueDetails = () => {
             const existingReview = userReviewsResponse.data.reviews.find(
               review => review.venue._id === venueId
             );
-            console.log(existingReview);
             setUserReview(existingReview || null);
           }
         } catch (error) {
@@ -264,15 +263,28 @@ const VenueDetails = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      const baseAmount = venue.bookingPay;
+      const platformFee = baseAmount * 0.03; // 3% platform fee
+      const totalAmount = baseAmount + platformFee;
+
+      // Validate required fields
+      if (!bookingForm.date || !bookingForm.timeslot || !bookingForm.numberOfGuest) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+      console.log("venue details");
+      console.log(bookingForm);
+      console.log(baseAmount, platformFee, totalAmount);
+
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/booking/create`, {
         venueId,
         date: bookingForm.date,
         timeslot: parseInt(bookingForm.timeslot),
-        numberOfGuest: parseInt(bookingForm.numberOfGuest)
+        numberOfGuest: parseInt(bookingForm.numberOfGuest),
+        amount: baseAmount
       });
 
       if (response.data.success) {
-        console.log(response.data);
         // Navigate to payment page with booking data
         navigate('/payment-checkout', {
           state: {
@@ -284,7 +296,9 @@ const VenueDetails = () => {
               },
               clientSecret: response.data.clientSecret,
               paymentIntentId: response.data.paymentIntentId,
-              amount: venue.bookingPay
+              amount: baseAmount,
+              platformFee: platformFee,
+              totalAmount: totalAmount
             }
           }
         });
