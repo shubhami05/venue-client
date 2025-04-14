@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaBookmark, FaBusinessTime, FaCheckCircle, FaExternalLinkAlt, FaHandHoldingUsd, FaHandshake, FaMapMarkerAlt, FaPlaceOfWorship, FaStar, FaStarHalfAlt, FaUserCircle } from 'react-icons/fa'
 import about_img from '../assets/about_img.jpg'
 import hero_img from '../assets/hero_img.png'
 import { initAOS } from '../utils/initAOS.jsx';
+import VenueCard from '../components/VenueCard';
+import axios from 'axios';
 
 const aboutUsData = [
   {
@@ -50,10 +52,26 @@ const testimonialsData = [
 
 const Homepage = () => {
   const navigate = useNavigate();
+  const [featuredVenues, setFeaturedVenues] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     initAOS();
+    fetchFeaturedVenues();
   }, []);
+
+  const fetchFeaturedVenues = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/featured-venues`);
+      if (response.data.success) {
+        setFeaturedVenues(response.data.venues);
+      }
+    } catch (error) {
+      console.error('Error fetching featured venues:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className='bg-gray-900' >
@@ -108,8 +126,8 @@ const Homepage = () => {
         </div>
       </section>
 
-      <section className='bg-orange-50 w-100'>
-        <div className="flex justify-center py-12 text-orange-900 mt-10" data-aos="fade-up">
+      <section className='bg-orange-50 w-100' data-aos="fade-up">
+        <div className="flex justify-center py-12 text-orange-900 mt-10" >
           <div className="container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center animate-fade-in">
             {statsData.map((item, index) => (
               <div key={index} className='flex flex-col items-center'>
@@ -121,13 +139,48 @@ const Homepage = () => {
           </div>
         </div>
       </section>
+      {/* Featured Venues Section */}
+      <section className="py-20 w-100 flex justify-center text-orange-900 fade-in-section" data-aos="fade-up">
+        <div className="container" >
+          <h2 className="text-3xl font-bold text-center text-orange-50 overflow-y-hidden">Featured Venues</h2>
+          <div className='flex w-full mb-8 justify-end'>
 
-      <section className="py-20 w-100 flex justify-center text-orange-900 fade-in-section">
-        <div className="container" data-aos="fade-up">
-          <h2 className="text-3xl font-bold mb-8 text-center text-orange-50 overflow-y-hidden">What Our Clients Say</h2>
-          <div className="grid px-10 py-20 grid-cols-1 lg:grid-cols-3 gap-8">
+            <button className='bg-orange-500 font-semibold text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-all' onClick={() => navigate('/explore')}>Explore All</button>
+          </div>
+          {loading ? (
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+            </div>
+          ) : featuredVenues.length > 0 ? (
+            <div className="grid grid-cols-1 place-item md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
+              {featuredVenues.map((venue) => (
+                <VenueCard
+                  key={venue._id}
+                  id={venue._id}
+                  name={venue.name}
+                  city={venue.city}
+                  type={venue.type}
+                  image={venue.photos[0]}
+                  rating={venue.rating}
+                  bookingPay={venue.bookingPay}
+                  food={venue.food.providedByVenue}
+                  parking={venue.parking.available}
+                  data-aos="fade-up"
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-orange-50">No featured venues available at the moment.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="py-20 mb-10 w-100 flex justify-center text-orange-900 " >
+        <div className="container" >
+          <h2 className="text-3xl font-bold mb-8 text-center text-orange-50 overflow-y-hidden" data-aos="fade-up">What Our Clients Say</h2>
+          <div className="grid px-10 py-4 grid-cols-1 lg:grid-cols-3 gap-8">
             {testimonialsData.map((item, index) => (
-              <div key={index} className="bg-orange-50 shadow-lg p-6 rounded-lg">
+              <div key={index} className="bg-orange-50 shadow-lg p-6 rounded-lg" data-aos="fade-up">
                 <div className="flex items-center mb-4">
                   <FaUserCircle className="h-8 w-8 text-orange-900 mr-4" />
                   <div>
@@ -145,9 +198,11 @@ const Homepage = () => {
         </div>
       </section>
 
-      {/* Email section */}
-      <section className="container mx-auto pb-20">
-        <div className="bg-orange-50 p-6 container mx-auto rounded-lg shadow-lg" data-aos="fade-up">
+
+
+      {/* Email section
+      <section className="container mx-auto pb-20" data-aos="fade-up">
+        <div className="bg-orange-50 p-6 container mx-auto rounded-lg shadow-lg" >
           <h3 className="text-2xl text-gray-800 font-bold mb-4 text-center">For Recent Update, News.</h3>
           <p className="text-gray-800 mb-4 text-center">We helps businesses customize, automate and scale up their ad production and delivery.</p>
           <form className="flex sm:flex-row flex-col justify-center">
@@ -155,7 +210,7 @@ const Homepage = () => {
             <button type='submit' className="bg-orange-500 transition-colors font-medium text-white px-0 sm:px-4 py-2 rounded-md hover:bg-orange-600 m-0 mt-4 sm:ml-4 sm:mt-0 drop-shadow-lg">Subscribe</button>
           </form>
         </div>
-      </section>
+      </section> */}
     </div>
   )
 }

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Carousel } from 'react-responsive-carousel';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarCheck, FaParking, FaUtensils, FaPaintBrush, FaCheck, FaTimes, FaList, FaMoneyBill, FaQuestionCircle, FaStar, FaRegStar, FaStarHalfAlt, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaCalendarCheck, FaParking, FaUtensils, FaPaintBrush, FaCheck, FaTimes, FaList, FaMoneyBill, FaQuestionCircle, FaStar, FaRegStar, FaStarHalfAlt, FaTrash, FaExclamationTriangle, FaExternalLinkAlt } from 'react-icons/fa';
 import { Modal } from 'flowbite-react';
 import toast from 'react-hot-toast';
 import Loader from '../components/Loader';
@@ -83,7 +83,7 @@ const VenueDetails = () => {
       setLoadingReviews(true);
       const response = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/fetch/venue/${venueId}`);
       if (response.data.success) {
-        setReviews(response.data.reviews);      
+        setReviews(response.data.reviews);
         // Check if user has already reviewed
         try {
           const userReviewsResponse = await axios.get(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/fetch`);
@@ -142,7 +142,7 @@ const VenueDetails = () => {
     try {
       setLoadingReviews(true);
       const response = await axios.delete(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/review/delete/${reviewToDelete}`);
-      
+
       if (response.data.success) {
         toast.success('Review deleted successfully');
         setUserReview(null);
@@ -189,7 +189,7 @@ const VenueDetails = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
+
       // Call the API endpoint to send the inquiry
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/inquiry/send`, {
         venueId,
@@ -197,7 +197,7 @@ const VenueDetails = () => {
         date: inquiryForm.eventDate,
         message: inquiryForm.message
       });
-      
+
       if (response.data.success) {
         toast.success(response.data.message || 'Inquiry submitted successfully!');
         setShowInquiryModal(false);
@@ -339,7 +339,7 @@ const VenueDetails = () => {
           </svg>
           Back to Venues
         </button>
-    </div>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Image Slider Section with improved styling */}
@@ -408,16 +408,22 @@ const VenueDetails = () => {
             {/* Basic Info Card */}
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h1 className="text-4xl font-bold text-gray-900 mb-4">{venue.name}</h1>
-              <div className="flex items-center text-gray-700 mb-6 text-lg">
-                <FaMapMarkerAlt className="mr-2 text-orange-600" />
-                <span className="font-medium">{venue.address}, {venue.city}</span>
+                <div className=" text-gray-700 mb-6 text-lg">
+                
+                <span className="font-medium">{venue.address}, {venue.city} {venue.locationURL && (
+                  <a href={venue.locationURL} target="_blank" rel="noopener noreferrer" className="flex items-center text-orange-600 hover:text-orange-700 transition-colors">
+                    <FaMapMarkerAlt className="mr-1 " />View on Map
+                  </a>
+                )}
+                </span>
+
               </div>
 
               {/* Quick Info Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-orange-50 p-4 rounded-lg text-center">
                   <h4 className="font-semibold text-gray-700">Type</h4>
-                  <p className="text-lg font-medium text-orange-700">{venue.type}</p>
+                  <p className="text-xl font-medium text-orange-700">{venue.type}</p>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg text-center">
                   <h4 className="font-semibold text-gray-700">Rooms</h4>
@@ -469,30 +475,30 @@ const VenueDetails = () => {
                 </div>
               </div>
               {venue.amenities.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Amenities</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {venue.amenities.map((amenity, index) => (
-                    <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
-                      <FaCheck className="text-green-600" />
-                      <span className="text-gray-800">{amenity}</span>
-                    </div>
-                  ))}
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Amenities</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {venue.amenities.map((amenity, index) => (
+                      <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
+                        <FaCheck className="text-green-600" />
+                        <span className="text-gray-800">{amenity}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
               )}
               {venue.restrictions.length > 0 && (
-              <div>
-                <h4 className="text-lg font-semibold text-gray-800 mb-3">Restrictions</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {venue.restrictions.map((restriction, index) => (
-                    <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
-                      <FaXmark className="text-red-600" />
-                      <span className="text-gray-800">{restriction}</span>
-                    </div>
-                  ))}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Restrictions</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {venue.restrictions.map((restriction, index) => (
+                      <div key={index} className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg">
+                        <FaXmark className="text-red-600" />
+                        <span className="text-gray-800">{restriction}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
               )}
             </div>
 
@@ -590,12 +596,12 @@ const VenueDetails = () => {
           <div className="bg-white mt-5 rounded-xl shadow-lg p-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">About this Venue</h3>
             <p className="text-gray-700 leading-relaxed text-lg">{venue.description}</p>
-          </div> 
-          {venue.cancellationPolicy && (
-          <div className="bg-white mt-5 rounded-xl shadow-lg p-8">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Cancellation Policy</h3>
-            <p className="text-gray-700 leading-relaxed text-lg">{venue.cancellationPolicy}</p>
           </div>
+          {venue.cancellationPolicy && (
+            <div className="bg-white mt-5 rounded-xl shadow-lg p-8">
+              <h3 className="text-2xl font-semibold text-gray-900 mb-4">Cancellation Policy</h3>
+              <p className="text-gray-700 leading-relaxed text-lg">{venue.cancellationPolicy}</p>
+            </div>
           )}
         </motion.div>
 
@@ -669,7 +675,7 @@ const VenueDetails = () => {
                     </div>
                     <div className="ml-16">
                       <p className="text-gray-700">{review.message}</p>
-                      
+
                       {review.ownerReply && review.ownerReply.message && (
                         <div className="mt-4 bg-gray-50 p-4 rounded-lg border-l-4 border-orange-500">
                           <p className="font-medium text-gray-900 mb-1">Response from venue owner</p>
@@ -687,8 +693,8 @@ const VenueDetails = () => {
       </div>
 
       {/* Inquiry Modal */}
-      <Modal 
-        show={showInquiryModal} 
+      <Modal
+        show={showInquiryModal}
         onClose={() => setShowInquiryModal(false)}
         size="md"
       >
@@ -708,7 +714,7 @@ const VenueDetails = () => {
                 placeholder="Enter your name"
               />
             </div>
-           
+
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Event Date</label>
               <DatePicker
@@ -992,7 +998,7 @@ const VenueDetails = () => {
                 ))}
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Your Review</label>
               <textarea
@@ -1004,7 +1010,7 @@ const VenueDetails = () => {
                 placeholder="Share your experience with this venue..."
               />
             </div>
-            
+
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"

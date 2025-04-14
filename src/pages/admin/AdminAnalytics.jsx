@@ -34,6 +34,8 @@ const AdminAnalytics = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchAnalytics();
@@ -93,6 +95,12 @@ const AdminAnalytics = () => {
     }).format(amount);
   };
 
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = stats.revenueTrend.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(stats.revenueTrend.length / itemsPerPage);
+
   if (loading) {
     return <Loader />;
   }
@@ -106,14 +114,15 @@ const AdminAnalytics = () => {
   }
 
   return (
-    <div className="xl:container xl:mx-auto bg-orange-100 min-h-screen px-2 py-10">
-      <h1 className="text-2xl sm:text-3xl font-bold text-orange-900 mb-8 px-4">
-        Dashboard Overview
-      </h1>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+
+      </div>
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Link to="/admin/users" className="shadow-lg bg-orange-50 text-orange-700 p-4 rounded-md hover:bg-orange-100 transition-colors cursor-pointer hover:text-orange-900">
+        <Link to="/admin/users" className="shadow-lg bg-orange-50 text-orange-700 p-4 rounded-md hover:bg-orange-50 transition-colors cursor-pointer hover:text-orange-900">
           <div className="flex justify-end">
             <FaUsers className="h-9 w-9 my-2" />
           </div>
@@ -123,7 +132,7 @@ const AdminAnalytics = () => {
           </div>
         </Link>
 
-        <Link to="/admin/bookings" className="shadow-lg bg-orange-50 text-orange-700 hover:text-orange-900 p-4 rounded-md hover:bg-orange-100 transition-colors cursor-pointer">
+        <Link to="/admin/bookings" className="shadow-lg bg-orange-50 text-orange-700 p-4 rounded-md hover:bg-orange-50 transition-colors cursor-pointer hover:text-orange-900">
           <div className="flex justify-end">
             <FaCalendarCheck className="h-9 w-9 my-2" />
           </div>
@@ -133,7 +142,7 @@ const AdminAnalytics = () => {
           </div>
         </Link>
 
-        <Link to="/admin/venues" className="shadow-lg bg-orange-50 text-orange-700 hover:text-orange-900 p-4 rounded-md hover:bg-orange-100 transition-colors cursor-pointer">
+        <Link to="/admin/venues" className="shadow-lg bg-orange-50 text-orange-700 p-4 rounded-md hover:bg-orange-50 transition-colors cursor-pointer hover:text-orange-900">
           <div className="flex justify-end">
             <FaBuilding className="h-9 w-9 my-2" />
           </div>
@@ -143,7 +152,7 @@ const AdminAnalytics = () => {
           </div>
         </Link>
 
-        <Link to="/admin/owners" className="shadow-lg bg-orange-50 text-orange-700 hover:text-orange-900 p-4 rounded-md hover:bg-orange-100 transition-colors cursor-pointer">
+        <Link to="/admin/owners" className="shadow-lg bg-orange-50 text-orange-700 p-4 rounded-md hover:bg-orange-50 transition-colors cursor-pointer hover:text-orange-900 ">
           <div className="flex justify-end">
             <FaUserTie className="h-9 w-9 my-2" />
           </div>
@@ -159,7 +168,7 @@ const AdminAnalytics = () => {
         <div className="bg-orange-50 shadow-lg rounded-md p-6 col-span-1 md:col-span-2">
           <h2 className="text-xl font-semibold text-orange-900 mb-4">Booking Trend</h2>
           <div className="h-64 flex items-end justify-between space-x-2">
-            {stats.revenueTrend.map((data, index) => (
+            {currentItems.map((data, index) => (
               <div key={index} className="flex flex-col items-center flex-1">
                 <div className="relative w-full">
                   <div
@@ -270,7 +279,7 @@ const AdminAnalytics = () => {
               ))}
               {stats.recentBookings.length > 3 && (
                 <Link to="/admin/bookings" className="text-sm text-orange-600 hover:text-orange-800">
-                  View all {stats.recentBookings.length} bookings
+                  View all  bookings
                 </Link>
               )}
             </div>
@@ -330,6 +339,26 @@ const AdminAnalytics = () => {
           )}
         </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="flex flex-wrap space-x-1">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-orange-100'
+                  }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

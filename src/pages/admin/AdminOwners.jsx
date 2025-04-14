@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import Loader from '../../components/Loader';
 import { useNavigate } from 'react-router-dom';
 
-const AdminOwners = ({ searchTerm }) => {
+const AdminOwners = ({ searchTerm = '' }) => {
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,6 +15,8 @@ const AdminOwners = ({ searchTerm }) => {
     venueCount: 'all',
     joinDate: 'all'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,6 +97,16 @@ const AdminOwners = ({ searchTerm }) => {
     
     return matchesSearchTerm && matchesVenueCount && matchesJoinDate;
   });
+
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredOwners.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredOwners.length / itemsPerPage);
+ // Reset current page when filters change
+ useEffect(() => {
+  setCurrentPage(1);
+}, [searchTerm, filterOptions]);
 
   if (loading) {
     return (
@@ -189,7 +201,7 @@ const AdminOwners = ({ searchTerm }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOwners.map((owner) => (
+            {currentItems.map((owner) => (
               <tr key={owner._id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{owner.fullname}</div>
@@ -246,9 +258,9 @@ const AdminOwners = ({ searchTerm }) => {
 
       {/* Card View - Visible only on small screens */}
       <div className="md:hidden">
-        {filteredOwners.length > 0 ? (
+        {currentItems.length > 0 ? (
           <div className="grid grid-cols-1 gap-4">
-            {filteredOwners.map((owner) => (
+            {currentItems.map((owner) => (
               <div 
                 key={owner._id}
                 className="bg-white rounded-lg shadow p-4"
@@ -287,6 +299,26 @@ const AdminOwners = ({ searchTerm }) => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="flex flex-wrap space-x-1">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-orange-100'
+                  }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

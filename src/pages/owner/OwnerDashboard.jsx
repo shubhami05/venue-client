@@ -61,7 +61,7 @@ const OwnerDashboard = () => {
     }
 
     return (
-        <div className='xl:container xl:mx-auto bg-orange-100 min-h-screen px-2 py-10'>
+        <div className='p-4'>
             <h1 className="text-2xl sm:text-3xl font-bold text-orange-900 mb-8 px-4">
                 Dashboard Overview
             </h1>

@@ -22,9 +22,11 @@ const PendingOwners = ({ searchTerm = '' }) => {
     title: '',
     message: '',
     type: 'warning',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchPendingOwners();
@@ -91,14 +93,14 @@ const PendingOwners = ({ searchTerm = '' }) => {
   const filteredApplications = applications.filter(application => {
     if (!searchTerm) return true;
     const searchTermLower = searchTerm.toLowerCase();
-    
+
     const matchesSearchTerm = (
       (application.name || '').toLowerCase().includes(searchTermLower) ||
       (application.email || '').toLowerCase().includes(searchTermLower) ||
       (application.phone || '').toLowerCase().includes(searchTermLower) ||
       (application.city || '').toLowerCase().includes(searchTermLower)
     );
-    
+
     // Apply submission date filter if selected
     let matchesSubmissionDate = true;
     if (filterOptions.submissionDate !== 'all') {
@@ -107,13 +109,13 @@ const PendingOwners = ({ searchTerm = '' }) => {
       const today = new Date(now.setHours(0, 0, 0, 0));
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const lastWeek = new Date(today);
       lastWeek.setDate(lastWeek.getDate() - 7);
-      
+
       const lastMonth = new Date(today);
       lastMonth.setMonth(lastMonth.getMonth() - 1);
-      
+
       switch (filterOptions.submissionDate) {
         case 'today':
           matchesSubmissionDate = submissionDate.toDateString() === today.toDateString();
@@ -131,29 +133,39 @@ const PendingOwners = ({ searchTerm = '' }) => {
           matchesSubmissionDate = true;
       }
     }
-    
+
     // Apply city filter if selected
     let matchesCity = true;
     if (filterOptions.city !== 'all') {
       matchesCity = application.city.toLowerCase() === filterOptions.city.toLowerCase();
     }
-    
+
     // Apply status filter if selected
     let matchesStatus = true;
     if (filterOptions.status !== 'all') {
       matchesStatus = application.status.toLowerCase() === filterOptions.status.toLowerCase();
     }
-    
+
     return matchesSearchTerm && matchesSubmissionDate && matchesCity && matchesStatus;
   });
 
   // Get unique cities for filter dropdown
   const uniqueCities = [...new Set(applications.map(application => application.city))].filter(Boolean);
 
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterOptions]);
+  
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -162,12 +174,12 @@ const PendingOwners = ({ searchTerm = '' }) => {
     return (
       <div className="p-4 text-center   text-red-600">
         <button
-            onClick={() => navigate('/admin/owners')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
-          >
-            <MdArrowBack className="mr-1" />
-            Back to Owners
-          </button>
+          onClick={() => navigate('/admin/owners')}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <MdArrowBack className="mr-1" />
+          Back to Owners
+        </button>
         {error}
       </div>
     );
@@ -212,7 +224,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.submissionDate}
-                onChange={(e) => setFilterOptions({...filterOptions, submissionDate: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, submissionDate: e.target.value })}
               >
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
@@ -226,7 +238,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.city}
-                onChange={(e) => setFilterOptions({...filterOptions, city: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, city: e.target.value })}
               >
                 <option value="all">All Cities</option>
                 {uniqueCities.map((city) => (
@@ -239,7 +251,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.status}
-                onChange={(e) => setFilterOptions({...filterOptions, status: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, status: e.target.value })}
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -264,9 +276,9 @@ const PendingOwners = ({ searchTerm = '' }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredApplications.length > 0 ? (
-              filteredApplications.map((application) => (
-                <tr 
+            {currentItems.length > 0 ? (
+              currentItems.map((application) => (
+                <tr
                   key={application._id}
                   className="hover:bg-gray-50"
                 >
@@ -338,9 +350,9 @@ const PendingOwners = ({ searchTerm = '' }) => {
 
       {/* Card View - Visible only on small screens */}
       <div className="md:hidden grid grid-cols-1 gap-4">
-        {filteredApplications.length > 0 ? (
-          filteredApplications.map((application) => (
-            <div 
+        {currentItems.length > 0 ? (
+          currentItems.map((application) => (
+            <div
               key={application._id}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
             >
@@ -360,7 +372,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
                     Pending
                   </span>
                 </div>
-                
+
                 <div className="border-t border-gray-200 pt-3 mt-3">
                   <div className="grid grid-cols-1 gap-3">
                     <div>
@@ -370,7 +382,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
                       </div>
                       <div className="text-sm text-gray-900 ml-5">{application.email}</div>
                     </div>
-                    
+
                     <div>
                       <div className="flex items-center text-sm text-gray-700 mb-1">
                         <MdPhone className="h-4 w-4 mr-1" />
@@ -395,7 +407,7 @@ const PendingOwners = ({ searchTerm = '' }) => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 flex justify-end space-x-2">
                   <button
                     onClick={() => handleStatusChange(application._id, 'accepted')}
@@ -421,6 +433,26 @@ const PendingOwners = ({ searchTerm = '' }) => {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="flex flex-wrap space-x-1">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-orange-100'
+                  }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

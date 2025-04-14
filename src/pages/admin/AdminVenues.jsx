@@ -8,7 +8,7 @@ import VenueDetailsModal from '../../components/VenueDetailsModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 
-const AdminVenues = ({ searchTerm }) => {
+const AdminVenues = ({ searchTerm = '' }) => {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,8 +24,10 @@ const AdminVenues = ({ searchTerm }) => {
     title: '',
     message: '',
     type: 'warning',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -99,11 +101,17 @@ const AdminVenues = ({ searchTerm }) => {
     const matchesCity = filterOptions.city === 'all' || venue.city === filterOptions.city;
 
     // Apply owner email filter if selected
-    const matchesOwnerEmail = filterOptions.ownerEmail === 'all' || 
+    const matchesOwnerEmail = filterOptions.ownerEmail === 'all' ||
       venue.owner?.email === filterOptions.ownerEmail;
 
     return matchesSearchTerm && matchesCity && matchesOwnerEmail;
   });
+
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredVenues.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredVenues.length / itemsPerPage);
 
   const handleEdit = (venueId) => {
     // Implement edit functionality
@@ -162,6 +170,10 @@ const AdminVenues = ({ searchTerm }) => {
       </div>
     );
   };
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterOptions]);
 
   if (loading) {
     return (
@@ -183,8 +195,8 @@ const AdminVenues = ({ searchTerm }) => {
           Pending Venues
         </button>
       </div>
-      
-      {error ? (<p>{error}</p> 
+
+      {error ? (<p>{error}</p>
       ) : (
         <>
           {/* Filters */}
@@ -211,7 +223,7 @@ const AdminVenues = ({ searchTerm }) => {
                   <select
                     className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                     value={filterOptions.city}
-                    onChange={(e) => setFilterOptions({...filterOptions, city: e.target.value})}
+                    onChange={(e) => setFilterOptions({ ...filterOptions, city: e.target.value })}
                   >
                     <option value="all">All Cities</option>
                     {cities.map(city => (
@@ -224,7 +236,7 @@ const AdminVenues = ({ searchTerm }) => {
                   <select
                     className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                     value={filterOptions.ownerEmail}
-                    onChange={(e) => setFilterOptions({...filterOptions, ownerEmail: e.target.value})}
+                    onChange={(e) => setFilterOptions({ ...filterOptions, ownerEmail: e.target.value })}
                   >
                     <option value="all">All Owner Emails</option>
                     {ownerEmails.map(email => (
@@ -245,15 +257,15 @@ const AdminVenues = ({ searchTerm }) => {
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Owner</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Location</th>
-                   
+
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Rating</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Booking Price</th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Remove</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredVenues.map((venue) => (
-                    <tr 
+                  {currentItems.map((venue) => (
+                    <tr
                       key={venue._id}
                       onClick={() => handleRowClick(venue._id)}
                       className="cursor-pointer hover:bg-gray-50"
@@ -275,7 +287,7 @@ const AdminVenues = ({ searchTerm }) => {
                           </div>
                         </div>
                       </td>
-                     
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         {venue.rating ? (
                           <div className="flex items-center">
@@ -314,8 +326,8 @@ const AdminVenues = ({ searchTerm }) => {
 
           {/* Card View (Visible on small screens) */}
           <div className="md:hidden grid grid-cols-1 gap-4">
-            {filteredVenues.map((venue) => (
-              <div 
+            {currentItems.map((venue) => (
+              <div
                 key={venue._id}
                 onClick={() => handleRowClick(venue._id)}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
@@ -336,7 +348,7 @@ const AdminVenues = ({ searchTerm }) => {
                       <div className="text-xs text-gray-500">Full Day Rate</div>
                     </div>
                   </div>
-                  
+
                   <div className="border-t border-gray-200 pt-3 mt-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -346,7 +358,7 @@ const AdminVenues = ({ searchTerm }) => {
                         </div>
                         <div className="text-sm text-gray-900 ml-5">{venue.owner?.name || 'N/A'}</div>
                       </div>
-                      
+
                       <div>
                         <div className="flex items-center text-sm text-gray-700 mb-1">
                           <MdMail className="h-4 w-4 mr-1" />
@@ -354,7 +366,7 @@ const AdminVenues = ({ searchTerm }) => {
                         </div>
                         <div className="text-sm text-gray-900 ml-5">{venue.owner?.email || 'N/A'}</div>
                       </div>
-                      
+
                       <div>
                         <div className="flex items-center text-sm text-gray-700 mb-1">
                           <MdPhone className="h-4 w-4 mr-1" />
@@ -362,7 +374,7 @@ const AdminVenues = ({ searchTerm }) => {
                         </div>
                         <div className="text-sm text-gray-900 ml-5">{venue.owner?.phone || 'N/A'}</div>
                       </div>
-                      
+
                       <div>
                         <div className="flex items-center text-sm text-gray-700 mb-1">
                           <MdStar className="h-4 w-4 mr-1" />
@@ -381,7 +393,7 @@ const AdminVenues = ({ searchTerm }) => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={(e) => {
@@ -399,6 +411,26 @@ const AdminVenues = ({ searchTerm }) => {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-4 mb-6">
+              <div className="flex flex-wrap space-x-1">
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index + 1)}
+                    className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                      ? 'bg-orange-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-orange-100'
+                      }`}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 

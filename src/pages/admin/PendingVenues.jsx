@@ -25,9 +25,11 @@ const PendingVenues = ({ searchTerm = '' }) => {
     title: '',
     message: '',
     type: 'warning',
-    onConfirm: () => {}
+    onConfirm: () => { }
   });
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchPendingVenues();
@@ -102,13 +104,13 @@ const PendingVenues = ({ searchTerm = '' }) => {
       const today = new Date(now.setHours(0, 0, 0, 0));
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const lastWeek = new Date(today);
       lastWeek.setDate(lastWeek.getDate() - 7);
-      
+
       const lastMonth = new Date(today);
       lastMonth.setMonth(lastMonth.getMonth() - 1);
-      
+
       switch (filterOptions.submissionDate) {
         case 'today':
           matchesSubmissionDate = submissionDate.toDateString() === today.toDateString();
@@ -126,12 +128,18 @@ const PendingVenues = ({ searchTerm = '' }) => {
           matchesSubmissionDate = true;
       }
     }
-    
+
     return matchesSearchTerm && matchesCity && matchesSubmissionDate;
   });
 
   // Get unique cities for filter dropdown
   const cities = [...new Set(venues.map(venue => venue.city).filter(Boolean))];
+
+  // Get current page items
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredVenues.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredVenues.length / itemsPerPage);
 
   const handleStatusChange = async (venueId, newStatus) => {
     const venue = venues.find(v => v._id === venueId);
@@ -170,11 +178,15 @@ const PendingVenues = ({ searchTerm = '' }) => {
       }
     });
   };
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterOptions]);
 
   if (loading) {
     return (
       <div className="p-4 flex justify-center items-center">
-        <Loader/>
+        <Loader />
       </div>
     );
   }
@@ -183,12 +195,12 @@ const PendingVenues = ({ searchTerm = '' }) => {
     return (
       <div className="p-4 text-center text-red-600">
         <button
-            onClick={() => navigate('/admin/venues')}
-            className="flex items-center text-gray-600 hover:text-gray-900"
-          >
-            <MdArrowBack className="mr-1" />
-            Back to Venues
-          </button>
+          onClick={() => navigate('/admin/venues')}
+          className="flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <MdArrowBack className="mr-1" />
+          Back to Venues
+        </button>
         {error}
       </div>
     );
@@ -233,7 +245,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.city}
-                onChange={(e) => setFilterOptions({...filterOptions, city: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, city: e.target.value })}
               >
                 <option value="all">All Cities</option>
                 {cities.map(city => (
@@ -246,7 +258,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.submissionDate}
-                onChange={(e) => setFilterOptions({...filterOptions, submissionDate: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, submissionDate: e.target.value })}
               >
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
@@ -263,7 +275,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
       <div className="hidden md:block bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full">
           <thead className="bg-gray-50">
-          <tr className="bg-orange-600 text-orange-50">
+            <tr className="bg-orange-600 text-orange-50">
               <th className="px-6 py-3 text-left text-xs font-medium     uppercase tracking-wider">Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium     uppercase tracking-wider">Owner</th>
               <th className="px-6 py-3 text-left text-xs font-medium     uppercase tracking-wider">Location</th>
@@ -273,8 +285,8 @@ const PendingVenues = ({ searchTerm = '' }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredVenues.map((venue) => (
-              <tr 
+            {currentItems.map((venue) => (
+              <tr
                 key={venue._id}
                 onClick={() => handleRowClick(venue._id)}
                 className="cursor-pointer hover:bg-gray-50"
@@ -290,14 +302,14 @@ const PendingVenues = ({ searchTerm = '' }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col space-y-1">
-                    
+
                     <div className="text-sm flex items-center ">
                       <MdLocationOn className="h-4 w-4 mr-1" />
                       {venue.city || 'N/A'}
                     </div>
                   </div>
                 </td>
-                
+
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     ₹{venue.bookingPay || 'N/A'}
@@ -340,8 +352,8 @@ const PendingVenues = ({ searchTerm = '' }) => {
 
       {/* Card View (Visible on small screens) */}
       <div className="md:hidden grid grid-cols-1 gap-4">
-        {filteredVenues.map((venue) => (
-          <div 
+        {currentItems.map((venue) => (
+          <div
             key={venue._id}
             onClick={() => handleRowClick(venue._id)}
             className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
@@ -359,7 +371,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
                   ₹{venue.bookingPay || 'N/A'}
                 </div>
               </div>
-              
+
               <div className="border-t border-gray-200 pt-3 mt-3">
                 <div className="grid grid-cols-1 gap-3">
                   <div>
@@ -370,7 +382,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
                     <div className="text-sm text-gray-900 ml-5">{venue.address || 'N/A'}</div>
                     <div className="text-sm text-gray-700 ml-5">{venue.city || 'N/A'}</div>
                   </div>
-                  
+
                   <div>
                     <div className="flex items-center text-sm text-gray-700 mb-1">
                       <MdAccessTime className="h-4 w-4 mr-1" />
@@ -382,7 +394,7 @@ const PendingVenues = ({ searchTerm = '' }) => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 flex justify-end space-x-2">
                 <button
                   onClick={(e) => {
@@ -409,6 +421,26 @@ const PendingVenues = ({ searchTerm = '' }) => {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-4 mb-6">
+          <div className="flex flex-wrap space-x-1">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-3 py-2 rounded-md ${currentPage === index + 1
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-orange-100'
+                  }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Venue Details Modal */}
       {(selectedVenue || modalLoading) && (

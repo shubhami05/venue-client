@@ -20,6 +20,7 @@ import { useAuth } from './hooks/auth'
 // Import our role-based route component
 import RoleBasedRoute from './components/RoleBasedRoute'
 import StripeProvider from './components/StripeProvider'
+import ResetPassword from './pages/ResetPassword.jsx'
 
 function AppContent() {
   const pathname = useLocation();
@@ -65,6 +66,8 @@ function AppContent() {
           <Route path='/login' element={<Loginpage />} />
           <Route path='/signup' element={<Signuppage />} />
           <Route path='/forgot-password' element={<ForgotPassword />} />
+          <Route path='/reset-password/:token' element={<ResetPassword/>}/>
+          
         </Route>
 
         {/* User Routes - No specific role required */}

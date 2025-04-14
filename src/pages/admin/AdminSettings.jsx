@@ -138,7 +138,7 @@ const AdminSettings = () => {
       [type]: ''
     }));
 
-    toast.success(`${type.replace(/([A-Z])/g, ' $1').toLowerCase()} added`);
+    
   };
 
   const removeItem = (type, index) => {
@@ -146,7 +146,6 @@ const AdminSettings = () => {
       ...prev,
       [type]: [...prev[type].slice(0, index), ...prev[type].slice(index + 1)]
     }));
-    toast.success(`Item removed`);
   };
 
   const addFeaturedVenue = async () => {
@@ -162,7 +161,6 @@ const AdminSettings = () => {
       }));
 
       setSelectedVenue('');
-      toast.success('Venue added to featured list');
     } catch (error) {
       console.error('Error adding featured venue:', error);
       toast.error('Failed to add featured venue');
@@ -174,7 +172,6 @@ const AdminSettings = () => {
       ...prev,
       featuredVenues: [...prev.featuredVenues.slice(0, index), ...prev.featuredVenues.slice(index + 1)]
     }));
-    toast.success('Venue removed from featured list');
   };
 
   const handleSubmit = async (e) => {
@@ -265,12 +262,13 @@ const AdminSettings = () => {
                   value={newItem.venueType}
                   onChange={handleNewItemChange}
                   placeholder="Add new venue type"
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-orange-50"
+                  className="flex-1 px-2 rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-orange-500  bg-white"
                 />
                 <button
                   type="button"
+                  disabled={!newItem.venueType}
                   onClick={() => addItem('venueType')}
-                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300"
+                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MdAdd className="mr-1" />
                   Add
@@ -311,12 +309,13 @@ const AdminSettings = () => {
                   value={newItem.eventType}
                   onChange={handleNewItemChange}
                   placeholder="Add new event type"
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-orange-50"
+                    className="flex-1 px-2 rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-orange-500  bg-white"
                 />
                 <button
                   type="button"
+                  disabled={!newItem.eventType}
                   onClick={() => addItem('eventType')}
-                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300"
+                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MdAdd className="mr-1" />
                   Add
@@ -357,12 +356,13 @@ const AdminSettings = () => {
                   value={newItem.amenity}
                   onChange={handleNewItemChange}
                   placeholder="Add new amenity"
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-orange-50"
+                  className="flex-1 px-2 rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-orange-500  bg-white"
                 />
                 <button
                   type="button"
+                  disabled={!newItem.amenity}
                   onClick={() => addItem('amenity')}
-                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300"
+                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MdAdd className="mr-1" />
                   Add
@@ -403,12 +403,13 @@ const AdminSettings = () => {
                   value={newItem.city}
                   onChange={handleNewItemChange}
                   placeholder="Add new city"
-                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 bg-orange-50"
+                  className="flex-1 px-2 rounded-md border border-gray-300 shadow-sm focus:ring-2 focus:ring-orange-500  bg-white"
                 />
                 <button
                   type="button"
+                  disabled={!newItem.city}
                   onClick={() => addItem('city')}
-                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300"
+                  className="px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 flex items-center transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MdAdd className="mr-1" />
                   Add

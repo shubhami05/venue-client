@@ -48,6 +48,7 @@ const UserLayout = () => {
                     <Route path='/contact' element={<Contactpage />} />
                     <Route path='/about' element={<Aboutpage />} />
 
+
                     {/* Login required pages*/}
                     <Route element={<LoginProtectedRoutes />}>
                         <Route path='/bookings' element={<Bookingspage />} />

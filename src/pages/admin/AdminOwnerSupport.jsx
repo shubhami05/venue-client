@@ -20,7 +20,8 @@ const AdminOwnerSupport = ({ searchTerm = '' }) => {
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState(null);
-
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
     useEffect(() => {
         fetchSupportRequests();
     }, []);
@@ -60,7 +61,6 @@ const AdminOwnerSupport = ({ searchTerm = '' }) => {
             const mailtoUrl = `mailto:${request.owner.email}?subject=${encodedSubject}&body=${encodedBody}`;
 
             window.open(mailtoUrl, '_blank');
-            toast.success('Email app opened with support request details');
         } catch (error) {
             console.error('Error opening email client:', error);
             toast.error('Failed to open email client');
@@ -181,6 +181,17 @@ const AdminOwnerSupport = ({ searchTerm = '' }) => {
             day: 'numeric'
         });
     };
+
+    // Get current page items
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredRequests.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+
+    // Reset current page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterOptions]);
 
     if (loading) {
         return (
@@ -309,202 +320,209 @@ const AdminOwnerSupport = ({ searchTerm = '' }) => {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredRequests.length > 0 ? (
-                            filteredRequests.map((request) => (
-                                <tr key={request._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openMessageModal(request)}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{request.owner.name}</div>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <MdEmail className="h-4 w-4 mr-1 text-orange-600" />
-                                            <span>{request.owner.email}</span>
-                                        </div>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <MdPhone className="h-4 w-4 mr-1 text-orange-600" />
-                                            <span>{request.owner.phone}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{request.subject}</div>
-                                    </td>
+                        {currentItems.map((request) => (
+                            <tr key={request._id} className="hover:bg-gray-50 cursor-pointer" onClick={() => openMessageModal(request)}>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">{request.owner.name}</div>
+                                    <div className="flex items-center text-sm text-gray-500">
+                                        <MdEmail className="h-4 w-4 mr-1 text-orange-600" />
+                                        <span>{request.owner.email}</span>
+                                    </div>
+                                    <div className="flex items-center text-sm text-gray-500">
+                                        <MdPhone className="h-4 w-4 mr-1 text-orange-600" />
+                                        <span>{request.owner.phone}</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="text-sm text-gray-900">{request.subject}</div>
+                                </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'resolved'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-orange-100 text-orange-800'
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'resolved'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-orange-100 text-orange-800'
+                                            }`}
+                                    >
+                                        {request.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                    {formatDate(request.createdAt)}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusChange(request._id, request.status);
+                                            }}
+                                            className={`p-2 rounded-full ${request.status === 'resolved'
+                                                ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                                : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
                                                 }`}
+                                            title={request.status === 'resolved' ? 'Mark as Pending' : 'Mark as Resolved'}
                                         >
-                                            {request.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {formatDate(request.createdAt)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleStatusChange(request._id, request.status);
-                                                }}
-                                                className={`p-2 rounded-full ${request.status === 'resolved'
-                                                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                        : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
-                                                    }`}
-                                                title={request.status === 'resolved' ? 'Mark as Pending' : 'Mark as Resolved'}
-                                            >
-                                                {request.status === 'resolved' ? (
-                                                    <MdClose className="h-5 w-5" />
-                                                ) : (
-                                                    <MdCheck className="h-5 w-5" />
-                                                )}
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEmailReply(request);
-                                                }}
-                                                className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full"
-                                                title="Reply via Email"
-                                                disabled={processingEmail}
-                                            >
-                                                <MdReply className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setRequestToDelete(request._id);
-                                                    setShowDeleteModal(true);
-                                                }}
-                                                className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
-                                                title="Delete Request"
-                                            >
-                                                <MdDelete className="h-5 w-5" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                                    No support requests found
+                                            {request.status === 'resolved' ? (
+                                                <MdClose className="h-5 w-5" />
+                                            ) : (
+                                                <MdCheck className="h-5 w-5" />
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEmailReply(request);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full"
+                                            title="Reply via Email"
+                                            disabled={processingEmail}
+                                        >
+                                            <MdReply className="h-5 w-5" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setRequestToDelete(request._id);
+                                                setShowDeleteModal(true);
+                                            }}
+                                            className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
+                                            title="Delete Request"
+                                        >
+                                            <MdDelete className="h-5 w-5" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
-                        )}
+                        ))}
                     </tbody>
                 </table>
             </div>
 
             {/* Card View (Visible on small screens) */}
             <div className="md:hidden grid grid-cols-1 gap-4">
-                {filteredRequests.length > 0 ? (
-                    filteredRequests.map((request) => (
-                        <div
-                            key={request._id}
-                            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
-                            onClick={() => openMessageModal(request)}
-                        >
-                            <div className="p-4">
-                                <div className="flex justify-between items-start mb-3">
+                {currentItems.map((request) => (
+                    <div
+                        key={request._id}
+                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                        onClick={() => openMessageModal(request)}
+                    >
+                        <div className="p-4">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">{request.owner.name}</h3>
+                                    <div className="flex items-center text-sm text-gray-500">
+                                        <MdEmail className="h-4 w-4 mr-1 text-orange-600" />
+                                        <span>{request.owner.email}</span>
+                                    </div>
+                                    <div className="flex items-center text-sm text-gray-500">
+                                        <MdPhone className="h-4 w-4 mr-1 text-orange-600" />
+                                        <span>{request.owner.phone}</span>
+                                    </div>
+                                </div>
+                                <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'resolved'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-orange-100 text-orange-800'
+                                        }`}
+                                >
+                                    {request.status}
+                                </span>
+                            </div>
+
+                            <div className="border-t border-gray-200 pt-3 mt-3">
+                                <div className="grid grid-cols-1 gap-3">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900">{request.owner.name}</h3>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <MdEmail className="h-4 w-4 mr-1 text-orange-600" />
-                                            <span>{request.owner.email}</span>
+                                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                                            <span className="font-medium">Subject:</span>
                                         </div>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <MdPhone className="h-4 w-4 mr-1 text-orange-600" />
-                                            <span>{request.owner.phone}</span>
+                                        <div className="text-sm text-gray-900">{request.subject}</div>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-center text-sm text-gray-700 mb-1">
+                                            <MdMessage className="h-4 w-4 mr-1 text-orange-600" />
+                                            <span className="font-medium">Message:</span>
+                                        </div>
+                                        <div className="text-sm text-gray-900">
+                                            {request.message.length > 100
+                                                ? `${request.message.substring(0, 100)}...`
+                                                : request.message}
                                         </div>
                                     </div>
-                                    <span
-                                        className={`px-2 py-1 rounded-full text-xs font-medium ${request.status === 'resolved'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-orange-100 text-orange-800'
-                                            }`}
-                                    >
-                                        {request.status}
-                                    </span>
-                                </div>
 
-                                <div className="border-t border-gray-200 pt-3 mt-3">
-                                    <div className="grid grid-cols-1 gap-3">
-                                        <div>
-                                            <div className="flex items-center text-sm text-gray-700 mb-1">
-                                                <span className="font-medium">Subject:</span>
-                                            </div>
-                                            <div className="text-sm text-gray-900">{request.subject}</div>
-                                        </div>
-
-                                        <div>
-                                            <div className="flex items-center text-sm text-gray-700 mb-1">
-                                                <MdMessage className="h-4 w-4 mr-1 text-orange-600" />
-                                                <span className="font-medium">Message:</span>
-                                            </div>
-                                            <div className="text-sm text-gray-900">
-                                                {request.message.length > 100
-                                                    ? `${request.message.substring(0, 100)}...`
-                                                    : request.message}
-                                            </div>
-                                        </div>
-
-                                        <div className="text-sm text-gray-500">
-                                            {formatDate(request.createdAt)}
-                                        </div>
+                                    <div className="text-sm text-gray-500">
+                                        {formatDate(request.createdAt)}
                                     </div>
-                                </div>
-
-                                <div className="mt-4 flex justify-end space-x-2">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleStatusChange(request._id, request.status);
-                                        }}
-                                        className={`p-2 rounded-full ${request.status === 'resolved'
-                                                ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                                : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
-                                            }`}
-                                        title={request.status === 'resolved' ? 'Mark as Pending' : 'Mark as Resolved'}
-                                    >
-                                        {request.status === 'resolved' ? (
-                                            <MdClose className="h-5 w-5" />
-                                        ) : (
-                                            <MdCheck className="h-5 w-5" />
-                                        )}
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEmailReply(request);
-                                        }}
-                                        className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full"
-                                        title="Reply via Email"
-                                        disabled={processingEmail}
-                                    >
-                                        <MdReply className="h-5 w-5" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setRequestToDelete(request._id);
-                                            setShowDeleteModal(true);
-                                        }}
-                                        className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
-                                        title="Delete Request"
-                                    >
-                                        <MdDelete className="h-5 w-5" />
-                                    </button>
                                 </div>
                             </div>
+
+                            <div className="mt-4 flex justify-end space-x-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStatusChange(request._id, request.status);
+                                    }}
+                                    className={`p-2 rounded-full ${request.status === 'resolved'
+                                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                        : 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                                        }`}
+                                    title={request.status === 'resolved' ? 'Mark as Pending' : 'Mark as Resolved'}
+                                >
+                                    {request.status === 'resolved' ? (
+                                        <MdClose className="h-5 w-5" />
+                                    ) : (
+                                        <MdCheck className="h-5 w-5" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEmailReply(request);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-900 bg-blue-50 p-2 rounded-full"
+                                    title="Reply via Email"
+                                    disabled={processingEmail}
+                                >
+                                    <MdReply className="h-5 w-5" />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRequestToDelete(request._id);
+                                        setShowDeleteModal(true);
+                                    }}
+                                    className="text-red-600 hover:text-red-900 bg-red-50 p-2 rounded-full"
+                                    title="Delete Request"
+                                >
+                                    <MdDelete className="h-5 w-5" />
+                                </button>
+                            </div>
                         </div>
-                    ))
-                ) : (
-                    <div className="text-center py-8 text-gray-500">
-                        No support requests found
                     </div>
-                )}
+                ))}
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-4 mb-6">
+                    <div className="flex flex-wrap space-x-1">
+                        {Array.from({ length: totalPages }, (_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => setCurrentPage(index + 1)}
+                                className={`px-3 py-2 rounded-md ${
+                                    currentPage === index + 1
+                                        ? 'bg-orange-600 text-white'
+                                        : 'bg-white text-gray-700 hover:bg-orange-100'
+                                }`}
+                            >
+                                {index + 1}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Message Modal */}
             {showMessageModal && selectedMessage && (
@@ -550,8 +568,8 @@ const AdminOwnerSupport = ({ searchTerm = '' }) => {
                                     <div className="font-medium text-gray-900 mr-2">Status:</div>
                                     <span
                                         className={`px-2 py-1 rounded-full text-xs font-medium ${selectedMessage.status === 'resolved'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-orange-100 text-orange-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-orange-100 text-orange-800'
                                             }`}
                                     >
                                         {selectedMessage.status}

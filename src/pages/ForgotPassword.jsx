@@ -24,8 +24,6 @@ const ForgotPassword = () => {
       
       if (response.data.success) {
         toast.success(response.data.message);
-        // Optionally redirect to login after a delay
-        setTimeout(() => navigate('/login'), 3000);
       } else {
         toast.error('Something went wrong. Please try again later.');
       }

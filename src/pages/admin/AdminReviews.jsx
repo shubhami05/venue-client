@@ -77,16 +77,16 @@ const AdminReviews = ({ searchTerm = '' }) => {
     // Filter by reply status
     if (filterOptions.hasReply !== 'all') {
       const hasReply = filterOptions.hasReply === 'yes';
-      result = result.filter(review => 
-        hasReply ? (review.ownerReply && review.ownerReply.message) : 
-        (!review.ownerReply || !review.ownerReply.message)
+      result = result.filter(review =>
+        hasReply ? (review.ownerReply && review.ownerReply.message) :
+          (!review.ownerReply || !review.ownerReply.message)
       );
     }
 
     // Apply search term
     if (searchTerm && searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      result = result.filter(review => 
+      result = result.filter(review =>
         review.message.toLowerCase().includes(searchLower) ||
         review.user.name.toLowerCase().includes(searchLower) ||
         review.venue.name.toLowerCase().includes(searchLower) ||
@@ -117,7 +117,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
   const confirmDeleteReview = async () => {
     try {
       const response = await axios.delete(`/api/admin/review/delete/${reviewToDelete._id}`);
-      
+
       if (response.data.success) {
         toast.success('Review deleted successfully');
         setReviews(reviews.filter(r => r._id !== reviewToDelete._id));
@@ -166,11 +166,10 @@ const AdminReviews = ({ searchTerm = '' }) => {
   }
 
   return (
-    <div className="rounded-sm border border-stroke text-orange-900 bg-orange-100 shadow-default dark:border-strokedark dark:bg-boxdark px-2 sm:px-5 min-h-screen">
-      <div className="py-6 px-2 sm:px-6 xl:px-7">
-        <h4 className="text-2xl sm:text-3xl font-bold text-orange-900 dark:text-white">
-          All Reviews Management
-        </h4>
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Reviews</h1>
+
       </div>
 
       {/* Filters */}
@@ -197,7 +196,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.venue}
-                onChange={(e) => setFilterOptions({...filterOptions, venue: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, venue: e.target.value })}
               >
                 <option value="all">All Venues</option>
                 {venues.map(venue => (
@@ -210,7 +209,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.rating}
-                onChange={(e) => setFilterOptions({...filterOptions, rating: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, rating: e.target.value })}
               >
                 <option value="all">All Ratings</option>
                 <option value="5">5 Stars</option>
@@ -225,7 +224,7 @@ const AdminReviews = ({ searchTerm = '' }) => {
               <select
                 className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
                 value={filterOptions.hasReply}
-                onChange={(e) => setFilterOptions({...filterOptions, hasReply: e.target.value})}
+                onChange={(e) => setFilterOptions({ ...filterOptions, hasReply: e.target.value })}
               >
                 <option value="all">All Reviews</option>
                 <option value="yes">With Reply</option>
@@ -385,8 +384,8 @@ const AdminReviews = ({ searchTerm = '' }) => {
                 key={index}
                 onClick={() => setCurrentPage(index + 1)}
                 className={`px-3 py-2 rounded-md ${currentPage === index + 1
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-orange-100'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-orange-100'
                   }`}
               >
                 {index + 1}

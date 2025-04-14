@@ -178,6 +178,10 @@ const Explorepage = () => {
 
     setFilteredVenues(filtered)
     setLoading(false)
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
 
     // Close filter menu on small devices after applying filters
     if (isSmallDevice) {
@@ -197,6 +201,10 @@ const Explorepage = () => {
     // Reset to all venues
     setFilteredVenues(allVenues)
 
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
     // Close filter menu on small devices after resetting filters
     if (isSmallDevice) {
       toggleFilter(false)
@@ -369,6 +377,8 @@ const Explorepage = () => {
                     type={venue.type}
                     id={venue._id}
                     bookingPay={venue.bookingPay}
+                    parking={venue.parking.available}
+                    food={venue.food.providedByVenue}
                   />
               )) : (
                 <div className="col-span-full flex justify-center items-center pt-16">
