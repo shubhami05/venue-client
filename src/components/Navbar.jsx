@@ -117,6 +117,15 @@ const Navbar = () => {
                     >
                         Explore
                     </NavLink>
+                    <NavLink
+                        to="/favorites"
+                        className={({ isActive }) =>
+                            `nav-link text-gray-800 transition-colors hover:text-orange-900 mr-4 ${isActive ? 'active' : ''}`
+                        }
+                        onClick={closeMenu}
+                    >
+                        Favorites
+                    </NavLink>
                     {
                         userLogined ?
                             <NavLink
@@ -156,7 +165,7 @@ const Navbar = () => {
                                 <FaChevronDown className={`transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
                             <div
-                                className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-[9999] overflow-hidden transition-all duration-300 ease-in-out transform origin-top ${dropdownOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 pointer-events-none'}`}
+                                className={`absolute right-0 mt-2 min-w-48 bg-white rounded-lg shadow-lg z-[9999] overflow-hidden transition-all duration-300 ease-in-out transform origin-top ${dropdownOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 pointer-events-none'}`}
                             >
                                 <div className="">
                                     <div className="px-4 py-2">

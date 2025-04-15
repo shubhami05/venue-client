@@ -19,6 +19,8 @@ import { useAuth } from '../hooks/auth';
 import toast from 'react-hot-toast';
 import PaymentCheckout from '../pages/PaymentCheckout';
 import BookingConfirmation from '../pages/BookingConfirmation';
+import Favorites from '../pages/Favorites';
+
 
 const UserLayout = () => {
     const { userRole, userLogined } = useAuth();
@@ -46,7 +48,8 @@ const UserLayout = () => {
                     <Route path='/explore' element={<Explorepage />} />
                     <Route path='/explore/venue/:venueId' element={<VenueDetails />} />
                     <Route path='/contact' element={<Contactpage />} />
-                    <Route path='/about' element={<Aboutpage />} />
+                    <Route path='/about' element={<Aboutpage />} />\
+                    <Route path='/favorites' element={<Favorites />} />
 
 
                     {/* Login required pages*/}

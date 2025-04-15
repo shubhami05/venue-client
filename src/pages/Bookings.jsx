@@ -92,7 +92,7 @@ const Bookingspage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-orange-100 to-orange-50 pt-8 pb-16' style={{ paddingTop: '80px' }}>
+    <div className='min-h-screen bg-gradient-to-b from-orange-100 to-orange-50  pb-16 pt-8'>
       <div className='container mx-auto px-4'>
         {error ? (
           <div className='flex flex-col items-center justify-center rounded-lg p-8 text-center'>
@@ -128,9 +128,10 @@ const Bookingspage = () => {
           </div>
         ) : (
           <div className='grid grid-cols-1 gap-6'>
-            <h1 className='text-3xl md:text-4xl font-bold text-gray-800 mb-6 text-center'>
+            <h1 className='text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-left'>
               My Bookings
             </h1>
+            <div className='container grid grid-cols-1 gap-6'>
             {bookings.map((booking) => (
               <div
                 key={booking._id}
@@ -219,6 +220,7 @@ const Bookingspage = () => {
                 </div>
               </div>
             ))}
+            </div>
           </div>
         )}
       </div>
