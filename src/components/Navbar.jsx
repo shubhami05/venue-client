@@ -263,6 +263,15 @@ const Navbar = () => {
                     >
                         Explore
                     </NavLink>
+                    <NavLink
+                        to="/favorites"
+                        className={({ isActive }) =>
+                            `text-gray-800 transition-colors hover:text-orange-900 py-2 text-xl ${isActive ? 'text-orange-600 font-bold' : ''}`
+                        }
+                        onClick={closeMenu}
+                    >
+                        Favorites
+                    </NavLink>
                     {
                         userLogined ?
                             <NavLink

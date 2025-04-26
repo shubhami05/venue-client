@@ -140,7 +140,7 @@ const Bookingspage = () => {
                 <div className='md:flex'>
                   <div className='md:flex-shrink-0 bg-orange-600 md:w-1/4 p-6 flex flex-col justify-center items-center text-white'>
                     <div className='text-center'>
-                      <h3 className='text-xl font-bold mb-2 truncate'>{booking.venue.name}</h3>
+                      <h3 className='text-xl font-bold mb-2'>{booking.venue.name}</h3>
                       <div className='flex items-center justify-center mb-3'>
                         <MdLocationOn className='h-4 w-4 mr-1' />
                         <span className='text-sm'>{booking.venue.city}</span>
