@@ -536,7 +536,7 @@ const VenueDetails = () => {
 
                 {venue.food.providedByVenue && (
                   <div className="bg-orange-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-lg text-gray-800 mb-3">With Food</h4>
+                    <h4 className="font-semibold text-lg text-gray-800 mb-3">With Food <small className='text-gray-600'>(Per plate)</small></h4>
                     <div className="space-y-2">
                       <div className="flex justify-between text-gray-700">
                         <span className="font-medium">Morning</span>
