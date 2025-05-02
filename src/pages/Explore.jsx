@@ -165,9 +165,7 @@ const Explorepage = () => {
 
       // Search term filter
       const matchesSearch = searchTerm === '' ||
-        venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        venue.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        venue.description.toLowerCase().includes(searchTerm.toLowerCase())
+        venue.name.toLowerCase().includes(searchTerm.toLowerCase()) 
 
       return matchesFood &&
         matchesCity &&
