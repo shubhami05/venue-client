@@ -18,6 +18,7 @@ const VenueDetails = () => {
   const [loading, setLoading] = useState(true);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [otherEventType, setOtherEventType] = useState('');
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
     email: '',
@@ -189,6 +190,19 @@ const VenueDetails = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      // if (!inquiryForm.name || !inquiryForm.email || !inquiryForm.phone || !inquiryForm.eventDate || !inquiryForm.eventType || !inquiryForm.message) {
+      //   toast.error('Please fill in all required fields');
+      //   return;
+      // }
+
+      if(inquiryForm.eventType === 'Other' && !otherEventType) {
+        toast.error('Please specify the other event type');
+        return;
+      }
+
+      if(inquiryForm.eventType === 'Other') {
+        inquiryForm.eventType = otherEventType;
+      }
 
       // Call the API endpoint to send the inquiry
       const response = await axios.post(`${import.meta.env.VITE_API_BACKEND_URI}/api/user/inquiry/send`, {
@@ -745,7 +759,17 @@ const VenueDetails = () => {
                 {venue.events.map((event, index) => (
                   <option key={index} value={event}>{event}</option>
                 ))}
+                <option value="Other">Other</option>
               </select>
+              {inquiryForm.eventType === 'Other' && (
+                <input
+                  type="text"
+                  className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                  value={otherEventType}
+                  onChange={(e) => setOtherEventType(e.target.value)}
+                  placeholder="Specify other event type"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-800 mb-2">Message</label>

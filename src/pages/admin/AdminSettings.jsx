@@ -276,7 +276,7 @@ const AdminSettings = () => {
               </div>
             </div>
             
-            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2">
+            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 custom-scrollbar">
               {config.venueTypes.map((type, index) => (
                 <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center shadow-sm">
                   <span className="mr-2 text-gray-800">{type}</span>
@@ -323,7 +323,7 @@ const AdminSettings = () => {
               </div>
             </div>
             
-            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2">
+            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 custom-scrollbar">
               {config.eventTypes.map((type, index) => (
                 <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center shadow-sm">
                   <span className="mr-2 text-gray-800">{type}</span>
@@ -370,7 +370,7 @@ const AdminSettings = () => {
               </div>
             </div>
             
-            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2">
+            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 custom-scrollbar">
               {config.amenities.map((amenity, index) => (
                 <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center shadow-sm">
                   <span className="mr-2 text-gray-800">{amenity}</span>
@@ -417,7 +417,7 @@ const AdminSettings = () => {
               </div>
             </div>
             
-            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2">
+            <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 custom-scrollbar">
               {config.cities.map((city, index) => (
                 <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center shadow-sm">
                   <span className="mr-2 text-gray-800">{city}</span>
